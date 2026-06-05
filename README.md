@@ -16,11 +16,11 @@ Press **F11** for full-screen before the pitch.
 
 ## The 5-minute demo script (for the CEO room)
 
-1. **Open on the Cockpit.** "This is your bank as a living economic map. Every arc is a payment corridor — green creates economic profit, red destroys it. Width is flow, brightness is intensity. £41.9bn moving through 100 currencies, in one picture." Let the arcs animate.
+1. **Open on the Cockpit.** "This is your bank as a living economic map. Every arc is a payment corridor — green creates economic profit, red destroys it. Width is flow, brightness is intensity. £41.9bn moving through 120 currencies, in one picture." Let the arcs animate.
 2. **Pull the FX-margin lever** (right rail) up 1bp. "Watch the whole bank re-price — ROE, economic profit, EBITDA, and what you're worth, live." The KPI strip flashes and moves.
 3. **Click a red corridor** on the map (e.g. UK→Sierra Leone). "This lane *destroys* value — compliance load and capital outweigh the spread. The twin tells you to reprice or re-route."
-4. **Go to Market & Investor.** Toggle **PRIVATE · HELIOS ↔ IF WE IPO'D** top-right. "Here's the reconciliation you've always wanted: the analysts' model of CAB, line by line, against reality — you beat consensus on every line. And what you'd be worth if you listed: fintech margins on a bank multiple."
-5. **Hit "Generate equity research note."** "One click. The twin writes the analyst's initiating-coverage note from your live numbers — and a board narrative in your voice."
+4. **Go to Market & Investor.** Toggle **THE STREET · CABP ↔ THE ENGINE · INTRINSIC** top-right. "The bank trades as CAB Payments Holdings (CABP) — ~80p, ~£203m, down from £851m at IPO. The street prices the engine at ~5.8× EBITDA; specialist payments peers carry 10–15×. There's the re-rating gap — and the consensus reconciliation shows we beat on every line."
+5. **Hit "Generate equity research note."** "One click. It writes a BUY note with a target above the current 80p, from the live numbers — and a board narrative in your voice."
 6. **Open the Action Centre.** Tick "Automate KYC/AML" and "Reprice frontier tail." "Each move is modelled to ROE and shareholder value. Test the combination before you commit, then challenge your people with it."
 7. **Type a question** in the command bar: *"Why did ROE move?"* / *"Which corridors destroy value?"* "Ask it anything. It reads the twin and answers — your digital chief of staff."
 
@@ -32,8 +32,8 @@ Built in, and surfaced in-app via **ⓘ Sources & portability** / "what's real v
 
 | Layer | Status | Source |
 |---|---|---|
-| FY25 income £119m (+12%), adj. EBITDA £35m (29.8%), EPS 6.8p, FX/payment volume £41.9bn (+13%), 592 active clients, NII £30.9m, total assets £1.82bn | **Public** | CAB FY2025 results & 2024 annual report |
-| 100% Helios ownership, CEO Bhairav Trivedi, EMpowerFX 100 currencies / 450 pairs, frontier-market footprint | **Public** | CAB / Helios disclosures |
+| FY25 income £119m (+12%), adj. EBITDA £35m (29.8%), EPS 6.8p, FX/payment volume £41.9bn (+13%), 592 active clients; FY24 ROE 10.81%, CET1 £126.3m, total assets £1.82bn | **Public** | CAB Payments FY24–FY25 results & annual report |
+| Listed as **CAB Payments Holdings (LSE: CABP)** — share price ~80p, market cap ~£203m, IPO July 2023 at 335p/£851m, Helios largest shareholder; EMpower platforms, 120 currencies / 800 pairs / 190 countries / 30+ central banks / 390 local relationships; £13.5bn humanitarian & development flows in 2024 | **Public** | CAB Payments disclosures / LSE market data |
 | Published analyst consensus split (FX £45.5m / Payments £28.5m / Other £37.3m / OpEx £78.2m) | **Public** | CAB FY25 results page |
 | Peer multiples (Wise, Ebury, Western Union, Standard Chartered) | **Public** | Listed-peer filings / market data |
 | ROE, cost of equity, economic profit, cost-income, capital & liquidity ratios, valuation multiples | **Derived** | Modelled from the public figures + peer ratios |

@@ -180,8 +180,8 @@ tr.clk:hover td{background:#101a29}
     <span class="hint">ENTER</span>
   </div>
   <div class="toggle" id="scentoggle">
-    <button data-mode="private" class="on">PRIVATE · HELIOS</button>
-    <button data-mode="ipo">IF WE IPO'D</button>
+    <button data-mode="street" class="on">THE STREET · CABP</button>
+    <button data-mode="engine">THE ENGINE · INTRINSIC</button>
   </div>
   <div class="deskstat">
     <span class="dot"></span><span>LONDON DESK OPEN</span>
@@ -204,15 +204,26 @@ tr.clk:hover td{background:#101a29}
 
 <script>
 /* ============================================================ DATA ============================================================ */
-const COE = 0.112;              // cost of equity
-const TAXR = 0.107;
+const COE = 0.11;               // cost of equity: risk-free ~4% + beta·ERP + frontier/illiquidity premium
+const TAXR = 0.125;             // effective tax rate
 const BASE = {
-  income:119, fxIncome:47, payments:29, trade:9, nii:31, im:4,  // £m  (sum 120 ~ rounds to 119 reported)
-  compliance:12, opex:52, network:9, funding:6.9, da:5,
-  equity:132, tangEquity:114, rwa:905, totalAssets:1818,
-  fxVolBn:41.9, clients:592, currencies:100, pairs:450, countries:190,
-  cet1:18.2, totalCap:20.1, lcr:182, nsfr:134,
-  baseMarginBps:11.2, rateSensitiveBn:0.6, trappedM:118
+  // FY2025 income lines (£m) — total £119m, consistent with reported income & consensus split
+  fxIncome:47, payments:29, nii:30, trade:9, im:4,
+  // operating cost stack (cash opex, £m) — staff is the dominant driver for a people-heavy specialist bank
+  staff:42, tech:14, compliance:11, network:8, premises:9,        // = £84m → adj. EBITDA £35m (29.4%)
+  // below adj. EBITDA (£m)
+  amort:6, da:3, adjusting:6,    // amortisation of acquired intangibles (Segovia/EMP) + D&A + realignment items
+  // capital & balance sheet (£m) — FY24 audited anchors: CET1 £126.3m, ROE 10.81%, total assets £1,818m
+  equity:150, tangEquity:120, cet1Cap:126.3, rwa:720, totalAssets:1818,
+  fxVolBn:41.9, clients:592, currencies:120, pairs:800, countries:190,
+  cet1Pct:17.5, totalCapPct:19.4, lcr:182, nsfr:134,
+  baseMarginBps:11.2, rateSensitive:600, trappedM:118,
+  // disclosed network scale
+  centralBanks:30, localRels:390, humanitarianBn:13.5,
+  // listed parent: CAB Payments Holdings plc (LSE: CABP)
+  sharePence:80, shares:254, mktCap:203, ipoPence:335, ipoVal:851, ipoYear:2023,
+  consTarget:80, consLo:45, consHi:100, rating:"Buy", nAnalysts:6, pe:11.8,
+  rev23:137, rev24:106, ebitda23:64.6
 };
 
 const CORRIDORS = [
@@ -287,7 +298,7 @@ const PEERS = [
   ["Convera (ex-WU BS)","Private payments",8,18,11,null],
   ["Western Union","Listed payments",-3,28,6,7],
   ["Standard Chartered","Listed bank",6,null,7,8],
-  ["Crown Agents Bank","Helios-owned",12,29.8,null,null]
+  ["CAB Payments (CABP)","Listed · LSE",12,29.8,5.8,11.8]
 ];
 
 // consensus vs actual reconciliation (the gap)
@@ -305,87 +316,88 @@ const ACTIONS = [
   ["liqus","Reallocate USD & NGN nostro","Release 40% of trapped balances; cut funding drag",0,-2.4,-9,"liquidity"],
   ["exitgov","Exit legacy government payroll","Sub-economic mandate; runs negative EP",-1.9,-2.3,-1.4,"client"],
   ["routeng","Optimise Nigeria routing","Switch GTBank→Access + direct GHIPSS rail; cut fail rate",0,-0.9,0,"cost"],
-  ["anchordfi","Onboard 2 anchor DFI mandates","High-margin, low-capital development flows",5.0,-2.4,3.0,"revenue"]
+  ["anchordfi","Onboard 2 anchor DFI mandates","High-margin, low-capital development flows",5.0,2.4,3.0,"revenue"]
 ];
 
 /* ============================================================ STATE ============================================================ */
 let scenario = {fxMarginBps:11.2, volumeGrowthPct:0, rateShiftBps:0, complianceAutomationPct:0, liquidityReleasePct:0};
 let applied = {};   // action id -> true
 let activeView = "cockpit";
-let valMode = "private";
+let valMode = "street";
 let selectedCorridor = null;
 
 /* ============================================================ COMPUTE ENGINE ============================================================ */
-function corridorEP(c, vf, marginScale){
-  // c array indices: 5 vol,6 rev,7 opc,8 comp,9 liq,10 cap
+function corridorEP(c, vf, marginScale, act){
+  act = act || applied;
+  // c array indices: 5 vol,6 rev,7 opc,8 comp,9 liq,10 cap,11 settleH,12 failPct
   let rev = c[6]*marginScale*vf;
   let cost = (c[7]+c[8]+c[9])*(0.5+0.5*vf);
-  let cap = c[11];
+  let cap = c[10];
   // action overlays affecting specific corridors
-  if(applied.reprice && [ "NGN","GHS","CDF","SLE","PGK","ZMW" ].includes(c[2])) rev += rev*0.16;
+  if(act.reprice && [ "NGN","GHS","CDF","SLE","PGK","ZMW" ].includes(c[2])) rev += rev*0.16;
   let ep = rev - cost - cap*COE;
   return {rev,cost,cap,ep};
 }
-function clientEP(cl){
-  if(applied.exitmto && cl[0].startsWith("Sub-scale")) return null;
-  if(applied.exitgov && cl[0].startsWith("Legacy Government")) return null;
+function clientEP(cl, act){
+  act = act || applied;
+  if(act.exitmto && cl[0].startsWith("Sub-scale")) return null;
+  if(act.exitgov && cl[0].startsWith("Legacy Government")) return null;
   let ep = cl[2]-cl[3]-cl[4]*COE;
   return {rev:cl[2],cost:cl[3],cap:cl[4],liq:cl[5],ep};
 }
-function compute(){
-  const s=scenario, B=BASE;
+function compute(scn, act){
+  scn = scn || scenario; act = act || applied;
+  const s=scn, B=BASE;
   const vf = 1+s.volumeGrowthPct/100;
   const marginScale = s.fxMarginBps/B.baseMarginBps;
-  // income lines
-  let fx = B.fxVolBn*1000*(s.fxMarginBps/10000)*vf;          // bn*1000 = £m volume, *bps
+  // ---- income (£m) ----
+  let fx = B.fxVolBn*1000*(s.fxMarginBps/10000)*vf;            // £41.9bn × bps
   let payments = B.payments*vf;
   let trade = B.trade*(1+0.6*(vf-1));
-  let nii = B.nii + (s.rateShiftBps/10000)*(B.rateSensitiveBn*1000);
+  let nii = B.nii + (s.rateShiftBps/10000)*B.rateSensitive;    // rate sensitivity on earning assets
+  let liqUplift = B.trappedM*(s.liquidityReleasePct/100)*0.03; // redeploy trapped balances into earning assets
+  nii += liqUplift;
   let im = B.im;
-  // action revenue deltas
+  // ---- executive actions ----
   let actRev=0, actCost=0, actCap=0;
-  for(const a of ACTIONS){ if(applied[a[0]]){ actRev+=a[3]; actCost+=a[4]; actCap+=a[5]; } }
+  for(const a of ACTIONS){ if(act[a[0]]){ actRev+=a[3]; actCost+=a[4]; actCap+=a[5]; } }
   let income = fx+payments+trade+nii+im+actRev;
-  // costs
-  let compliance = B.compliance*(1-0.006*s.complianceAutomationPct);
-  let opex = B.opex*(1+0.25*(vf-1));
-  let network = B.network*(0.5+0.5*vf);
-  let liqReleaseSave = B.trappedM*(s.liquidityReleasePct/100)*0.05;
-  let funding = B.funding - liqReleaseSave;
-  let da = B.da;
-  let opCosts = compliance+opex+network+da;     // cost-income basis
-  let totalCost = opCosts+funding+actCost;
-  let ebitda = income - (opCosts-da) - funding - actCost; // = income - cash costs
-  let pbt = income - totalCost;
+  // ---- operating cost stack (cash opex) ----
+  let staff = B.staff*(1+0.15*(vf-1));                          // mostly fixed, partly volume-linked
+  let tech  = B.tech*(1+0.10*(vf-1));
+  let premises = B.premises;
+  let compliance = B.compliance*(1-0.006*s.complianceAutomationPct); // automation lever (up to ~48% cut)
+  let network = B.network*(0.5+0.5*vf);                         // SWIFT / settlement / correspondent fees
+  let cashOpex = staff+tech+premises+compliance+network+actCost;
+  // ---- earnings ----
+  let ebitda = income - cashOpex;
+  let amort=B.amort, da=B.da, adjusting=B.adjusting;
+  let pbt = ebitda - amort - da - adjusting;                    // intangible amort + D&A + adjusting items
   let tax = Math.max(0,pbt)*TAXR;
   let netProfit = pbt - tax;
-  // capital / equity
-  let capFreed = B.trappedM*(s.liquidityReleasePct/100)*0.25;
-  let equity = B.equity + actCap - capFreed;
+  // ---- returns & economic profit ----
+  let equity = B.equity + actCap;
   let roe = netProfit/equity;
-  let rote = netProfit/(B.tangEquity + actCap - capFreed);
-  let ep = (roe-COE)*equity;
-  let cir = opCosts/income;
+  let rote = netProfit/(B.tangEquity + actCap);
+  let capitalCharge = COE*equity;                              // cost of equity × capital employed
+  let ep = netProfit - capitalCharge;                          // ≡ (ROE − CoE) × equity
+  let cir = (staff+tech+premises+compliance+network)/income;
   let ebitdaMargin = ebitda/income;
-  // valuation
-  const mult = valMode==="ipo" ? {lo:12.5,base:15,hi:17} : {lo:9,base:10.5,hi:12};
+  // ---- valuation ----
+  const mult = valMode==="engine" ? {lo:10,base:12,hi:15} : {lo:4.5,base:5.8,hi:7};
   let val = {lo:ebitda*mult.lo, base:ebitda*mult.base, hi:ebitda*mult.hi, mult};
-  // segment EPs
+  // ---- segment economic profit ----
   const vfc=vf, ms=marginScale;
-  let corr = CORRIDORS.map(c=>{const r=corridorEP(c,vfc,ms);return {c,...r};});
-  let clients = CLIENTS.map(cl=>({cl,r:clientEP(cl)})).filter(x=>x.r).map(x=>({cl:x.cl,...x.r}));
-  return {fx,payments,trade,nii,im,income,compliance,opex,network,funding,da,liqReleaseSave,
-    ebitda,ebitdaMargin,pbt,tax,netProfit,equity,roe,rote,ep,cir,val,corr,clients,
-    vf,marginScale,actRev,actCost,actCap,opCosts,totalCost};
+  let corr = CORRIDORS.map(c=>{const r=corridorEP(c,vfc,ms,act);return {c,...r};});
+  let clients = CLIENTS.map(cl=>({cl,r:clientEP(cl,act)})).filter(x=>x.r).map(x=>({cl:x.cl,...x.r}));
+  return {fx,payments,trade,nii,im,liqUplift,income,
+    staff,tech,premises,compliance,network,cashOpex,amort,da,adjusting,
+    ebitda,ebitdaMargin,pbt,tax,netProfit,equity,roe,rote,capitalCharge,ep,cir,val,corr,clients,
+    vf,marginScale,actRev,actCost,actCap};
 }
 // base (neutral) snapshot for deltas
 function baseSnapshot(){
-  const sv=scenario, av=applied;
-  scenario={fxMarginBps:BASE.baseMarginBps,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0};
-  applied={};
-  const m=compute();
-  scenario=sv; applied=av;
-  return m;
+  return compute({fxMarginBps:BASE.baseMarginBps,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}, {});
 }
 
 /* ============================================================ FORMAT ============================================================ */
@@ -570,7 +582,7 @@ function renderKPIs(m){
     {k:"Adj. EBITDA",v:F.m0(m.ebitda),d:m.ebitda-b.ebitda,df:F.signm,good:1},
     {k:"Total Income",v:F.m0(m.income),d:m.income-b.income,df:F.signm,good:1},
     {k:"Cost / Income",v:F.pct(m.cir),d:m.cir-b.cir,df:x=>F.signbp(x*10000),good:-1},
-    {k:valMode==="ipo"?"Implied Equity Value · IPO":"Implied Value · Helios",v:F.m0(m.val.base),d:m.val.base-b.val.base,df:F.signm,good:1}
+    {k:valMode==="engine"?"Intrinsic Value · Engine":"Market Cap · CABP",v:F.m0(m.val.base),d:m.val.base-b.val.base,df:F.signm,good:1}
   ];
   document.getElementById("kpis").innerHTML = items.map(it=>{
     const ch=Math.abs(it.d)>0.0001;
@@ -593,9 +605,9 @@ VIEWS.cockpit=function(m){
     {label:"ROE base",value:b.roe*100,type:"start"},
     {label:"FX margin",value:(m.fx-b.fx)/m.equity*100*(1-TAXR),type:"delta"},
     {label:"Volume",value:(m.payments-b.payments+m.trade-b.trade)/m.equity*100*(1-TAXR),type:"delta"},
-    {label:"Rates",value:(m.nii-b.nii)/m.equity*100*(1-TAXR),type:"delta"},
+    {label:"Rates",value:((m.nii-m.liqUplift)-(b.nii-b.liqUplift))/m.equity*100*(1-TAXR),type:"delta"},
     {label:"Compliance",value:-(m.compliance-b.compliance)/m.equity*100*(1-TAXR),type:"delta"},
-    {label:"Liquidity",value:(b.funding-m.funding)/m.equity*100*(1-TAXR),type:"delta"},
+    {label:"Liquidity",value:(m.liqUplift-b.liqUplift)/m.equity*100*(1-TAXR),type:"delta"},
     {label:"Actions",value:(m.actRev-m.actCost)/m.equity*100*(1-TAXR),type:"delta"},
     {label:"ROE now",value:m.roe*100,type:"end"}
   ];
@@ -640,13 +652,15 @@ VIEWS.cockpit=function(m){
       <button class="btn gold sm" style="margin-top:12px" onclick="goAction()">→ Open Action Centre</button>
     </div>
     <div class="card">
-      <div class="ch"><h3>MARKET vs MANAGEMENT</h3><span class="tag gold">the gap</span></div>
-      <div class="row" style="gap:18px">
-        <div class="stat"><div class="lab">${valMode==='ipo'?'Implied value if listed':'Helios carrying value'}</div><div class="num gold">${F.m0(m.val.base)}</div><div class="sub">${m.val.mult.base}× adj. EBITDA · range ${F.m0(m.val.lo)}–${F.m0(m.val.hi)}</div></div>
+      <div class="ch"><h3>THE STREET vs THE ENGINE</h3><span class="tag gold">lens: ${valMode==='engine'?'INTRINSIC':'MARKET'}</span></div>
+      <div class="row" style="gap:10px">
+        <div class="stat" style="flex:1;padding:9px 11px;border-radius:8px;background:${valMode==='street'?'rgba(245,185,66,.13)':'transparent'};border:1px solid ${valMode==='street'?'var(--gold)':'var(--line2)'}">
+          <div class="lab">CABP market cap</div><div class="num" style="font-size:19px;color:${valMode==='street'?'var(--gold)':'var(--ink2)'}">${F.m0(m.ebitda*5.8)}</div><div class="sub">~5.8× EBITDA · 80p/share</div></div>
+        <div class="stat" style="flex:1;padding:9px 11px;border-radius:8px;background:${valMode==='engine'?'rgba(245,185,66,.13)':'transparent'};border:1px solid ${valMode==='engine'?'var(--gold)':'var(--line2)'}">
+          <div class="lab">Intrinsic · the engine</div><div class="num" style="font-size:19px;color:${valMode==='engine'?'var(--gold)':'var(--ink2)'}">${F.m0(m.ebitda*12)}</div><div class="sub">12× payments-peer multiple</div></div>
       </div>
-      <div class="divider"></div>
-      <div class="note">FY25 <b>beat consensus on every line</b> — gross income <span class="k">+£7.7m</span>, EBITDA <span class="k">+£2.0m</span>, EPS <span class="k">6.8p vs 6.4p</span>. The twin shows the CEO <b>where</b> that outperformance came from — and where the next leg is hiding.</div>
-      <button class="btn sm" style="margin-top:12px" onclick="setView('market')">→ Reconcile with the analysts</button>
+      <div class="note" style="margin-top:9px"><b class="gold">${F.m0(m.ebitda*12-m.ebitda*5.8)} re-rating gap.</b> The market prices the engine at ~5.8× EBITDA (£203m, down from £851m at IPO); specialist payments peers trade at 10–15×. Toggle the lens (top-right) to switch the headline everywhere. FY25 beat consensus on every line (income <span class="k">+£7.7m</span>).</div>
+      <button class="btn sm" style="margin-top:10px" onclick="setView('market')">→ Reconcile with the market</button>
     </div>
   </div>
 
@@ -669,20 +683,20 @@ function corridorDetail(m){
       <div class="stat"><div class="lab">Revenue</div><div class="num" style="font-size:16px">${F.m(o.rev)}</div></div>
       <div class="stat"><div class="lab">Economic Profit</div><div class="num" style="font-size:16px;color:${epColor(o.ep)}">${F.signm(o.ep)}</div></div>
       <div class="stat"><div class="lab">Margin</div><div class="num" style="font-size:16px">${(o.rev/(c[5]*m.vf*1000)*10000).toFixed(0)}bps</div></div>
-      <div class="stat"><div class="lab">Settlement</div><div class="num" style="font-size:16px">${c[12]}h</div></div>
-      <div class="stat"><div class="lab">Failure rate</div><div class="num" style="font-size:16px;color:${c[13]>1.5?'var(--neg)':'var(--ink)'}">${c[13]}%</div></div>
+      <div class="stat"><div class="lab">Settlement</div><div class="num" style="font-size:16px">${c[11]}h</div></div>
+      <div class="stat"><div class="lab">Failure rate</div><div class="num" style="font-size:16px;color:${c[12]>1.5?'var(--neg)':'var(--ink)'}">${c[12]}%</div></div>
       <div class="stat"><div class="lab">Liquidity used</div><div class="num" style="font-size:16px">${F.m(c[9])}</div></div>
-      <div class="stat"><div class="lab">Capital charge</div><div class="num" style="font-size:16px">${F.m(c[11]*COE)}</div></div>
+      <div class="stat"><div class="lab">Capital charge</div><div class="num" style="font-size:16px">${F.m(c[10]*COE)}</div></div>
     </div>
     <div class="note" style="margin-top:10px">${o.ep<0?`This lane <b style="color:#ff5d6c">destroys ${F.m(o.ep)}</b> of economic profit — compliance load (${F.m(c[8])}) and capital charge outweigh the spread. <b>Reprice +18bps or re-route</b> to turn it positive.`:`Healthy creator. ${o.ep>2?'Defend the relationship and pursue look-alike flows.':'Solid — watch the failure rate and liquidity drag.'}`}</div>
   </div>`;
 }
 
 VIEWS.market=function(m){
-  const b=baseSnapshot();
-  // valuation tree
+  const B=BASE;
+  const upside=Math.round((B.consTarget-B.sharePence)/B.sharePence*100);
   const peerRows=PEERS.map(p=>{
-    const isCab=p[0]==="Crown Agents Bank";
+    const isCab=p[0].includes("CABP");
     return `<tr ${isCab?'style="background:rgba(245,185,66,.08)"':''}><td class="l" ${isCab?'style="color:#f5b942;font-weight:700"':''}>${p[0]}</td>
       <td class="l dim">${p[1]}</td><td>${p[2]>=0?'+':''}${p[2]}%</td><td>${p[3]?p[3]+'%':'—'}</td>
       <td>${p[4]?p[4].toFixed(1)+'×':'—'}</td><td>${p[5]?p[5].toFixed(1)+'×':'—'}</td></tr>`;
@@ -693,24 +707,32 @@ VIEWS.market=function(m){
       <td style="color:${d>=0?'var(--pos)':'var(--neg)'}">${d>=0?'+':'−'}${isEps?Math.abs(d).toFixed(1):'£'+Math.abs(d).toFixed(1)+'m'}</td>
       <td><span class="tag ${d>=0?'pos':'neg'}">${d>=0?'BEAT':'MISS'}</span></td></tr>`;
   }).join("");
+  const sc=(lab,val,sub,col)=>`<div class="stat" style="padding:2px 0"><div class="lab">${lab}</div><div class="num" style="font-size:19px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div>`;
   return `
   <div class="viewhead">
     <div><div class="kicker">Level 1 · Market & Investor View</div>
-      <h2>How the market sees CAB — and how the CEO should</h2>
-      <p>Crown Agents Bank is private (100% Helios since 2016). The twin holds <b>both lenses at once</b>: the sponsor's carrying value today, and what public markets would pay <b>if CAB listed</b> — benchmarked to Wise, Ebury, Western Union and Standard Chartered.</p>
+      <h2>The street price against intrinsic value</h2>
+      <p>The bank trades as <b>CAB Payments Holdings (LSE: CABP)</b> — listed July 2023 at 335p (£851m), now ${B.sharePence}p (~£${B.mktCap}m) after the 2024 reset. This view sets <b>what the market pays</b> against <b>what the economic engine is worth</b>; the gap between them is the re-rating opportunity.</p>
     </div>
-    <div style="text-align:right"><div class="scenbadge">lens</div><div class="mono gold" style="font-size:20px">${valMode==='ipo'?"IF WE IPO'D":'PRIVATE · HELIOS'}</div><div class="scenbadge">toggle top-right ↗</div></div>
+    <div style="text-align:right"><div class="scenbadge">lens</div><div class="mono gold" style="font-size:18px">${valMode==='engine'?'THE ENGINE':'THE STREET'}</div><div class="scenbadge">toggle top-right ↗</div></div>
+  </div>
+
+  <div class="grid4" style="margin-bottom:14px">
+    <div class="card">${sc('Share price (CABP)',B.sharePence+'p','London Stock Exchange · GBp')}</div>
+    <div class="card">${sc('Market capitalisation','£'+B.mktCap+'m','from £'+B.ipoVal+'m at IPO','var(--neg)')}</div>
+    <div class="card">${sc('Consensus target',B.consTarget+'p',B.nAnalysts+' analysts · range '+B.consLo+'–'+B.consHi+'p')}</div>
+    <div class="card">${sc('Consensus rating',B.rating,B.pe+'× P/E · 5.8× EV/EBITDA','var(--gold)')}</div>
   </div>
 
   <div class="grid2" style="margin-bottom:14px">
     <div class="card hero">
-      <div class="ch"><h3>VALUATION TREE — ADJ. EBITDA → ENTERPRISE VALUE</h3><span class="tag gold">${m.val.mult.base}× base</span></div>
+      <div class="ch"><h3>VALUATION — WHERE THE MARKET IS vs INTRINSIC</h3><span class="tag gold">${F.m0(m.ebitda*12-m.ebitda*5.8)} gap</span></div>
       ${valuationTree(m)}
     </div>
     <div class="card">
-      <div class="ch"><h3>ANALYST CONSENSUS vs ACTUAL — FY2025</h3><span class="tag pos">BEAT ON EVERY LINE</span></div>
+      <div class="ch"><h3>CONSENSUS vs ACTUAL — FY2025</h3><span class="tag pos">BEAT ON EVERY LINE</span></div>
       <table><thead><tr><th class="l">Metric</th><th>Consensus</th><th>Actual</th><th>Δ</th><th>Verdict</th></tr></thead><tbody>${cons}</tbody></table>
-      <div class="note" style="margin-top:10px">This is the reconciliation the CEO wants: <b>the market's mental model of CAB, line by line, against reality.</b> Income beat by <span class="k">£7.7m</span>; the gap is where the equity story is under-told.</div>
+      <div class="note" style="margin-top:10px"><b>The market's model of the bank, line by line, against reality.</b> FY25 income landed <span class="k">£7.7m</span> ahead of consensus — the strength is in the numbers but not yet in the multiple.</div>
     </div>
   </div>
 
@@ -718,38 +740,41 @@ VIEWS.market=function(m){
     <div class="ch"><h3>PEER BENCHMARKING</h3><span class="meta">growth-vs-margin positioning · EV/EBITDA multiples</span></div>
     <div class="grid2">
       <table><thead><tr><th class="l">Company</th><th class="l">Type</th><th>Rev growth</th><th>EBITDA mgn</th><th>EV/EBITDA</th><th>P/E</th></tr></thead><tbody>${peerRows}</tbody></table>
-      <div>${scatter(PEERS.filter(p=>p[3]).map(p=>({x:p[2],y:p[3],r:p[0]==='Crown Agents Bank'?10:7,label:p[0].split(' ')[0],color:p[0]==='Crown Agents Bank'?'#f5b942':'#3fa9ff'})),{xlab:'Revenue growth %',ylab:'EBITDA margin %',h:260})}
-      <div class="flowtag" style="text-align:center">CAB sits in the prized corner — <b style="color:#f5b942">fintech-grade margin (29.8%) with double-digit growth</b> — yet is valued on a bank multiple. That is the re-rating thesis.</div></div>
+      <div>${scatter(PEERS.filter(p=>p[3]).map(p=>({x:p[2],y:p[3],r:p[0].includes("CABP")?10:7,label:p[0].split(' ')[0],color:p[0].includes("CABP")?'#f5b942':'#3fa9ff'})),{xlab:'Revenue growth %',ylab:'EBITDA margin %',h:260})}
+      <div class="flowtag" style="text-align:center">CABP sits in the prized corner — <b style="color:#f5b942">29.8% EBITDA margin with double-digit growth</b> — yet trades at ~5.8× EBITDA while payments peers carry 10–20×.</div></div>
     </div>
   </div>
 
   <div class="card">
-    <div class="ch"><h3>◆ ONE-CLICK ANALYST NOTE</h3><span class="meta">generated live from the twin · for the board pack</span></div>
+    <div class="ch"><h3>◆ ONE-CLICK ANALYST NOTE</h3><span class="meta">generated live from the model</span></div>
     <button class="btn gold" onclick="genNote()">▶ Generate equity research note</button>
-    <button class="btn" style="margin-left:8px" onclick="genBoard()">▶ Generate CEO board narrative</button>
+    <button class="btn" style="margin-left:8px" onclick="genBoard()">▶ Generate board narrative</button>
     <div id="noteout" style="margin-top:14px"></div>
   </div>`;
 };
 
 function valuationTree(m){
-  const b=baseSnapshot();
-  const W=560,H=250;
-  const ebd=m.ebitda;
+  const W=560,H=250; const ebd=m.ebitda;
+  const street=ebd*5.8, engine=ebd*12, gap=engine-street;
   return `<svg viewBox="0 0 ${W} ${H}" width="100%">
-    <rect x="20" y="105" width="120" height="44" rx="7" fill="#101a2b" stroke="#3fa9ff"/>
-    <text x="80" y="122" text-anchor="middle" style="fill:var(--ink2);font-size:9px">Adj. EBITDA</text>
-    <text x="80" y="140" text-anchor="middle" style="fill:#fff;font-family:var(--mono);font-size:15px">${F.m0(ebd)}</text>
-    <line class="wf-conn" x1="140" y1="127" x2="220" y2="127"/>
-    <text x="180" y="118" text-anchor="middle" style="fill:var(--gold);font-size:10px;font-family:var(--mono)">×${m.val.mult.lo}–${m.val.mult.hi}</text>
-    ${[['low',m.val.lo,55,m.val.mult.lo],['base',m.val.base,107,m.val.mult.base],['high',m.val.hi,159,m.val.mult.hi]].map((r,i)=>`
-      <rect x="220" y="${r[2]-18}" width="150" height="40" rx="7" fill="${i==1?'#1a1304':'#0e1521'}" stroke="${i==1?'#f5b942':'#26344a'}"/>
-      <text x="232" y="${r[2]-4}" style="fill:var(--ink3);font-size:9px">${r[0]} · ${r[3]}×</text>
-      <text x="232" y="${r[2]+13}" style="fill:${i==1?'#f5b942':'#fff'};font-family:var(--mono);font-size:14px">${F.m0(r[1])}</text>`).join('')}
-    <line class="wf-conn" x1="370" y1="107" x2="430" y2="107"/>
-    <rect x="430" y="84" width="120" height="48" rx="7" fill="#101a2b" stroke="#f5b942"/>
-    <text x="490" y="102" text-anchor="middle" style="fill:var(--ink2);font-size:9px">${valMode==='ipo'?'Implied mkt cap':'Sponsor value'}</text>
-    <text x="490" y="121" text-anchor="middle" style="fill:#f5b942;font-family:var(--mono);font-size:16px">${F.m0(m.val.base)}</text>
-    <text x="290" y="210" text-anchor="middle" style="fill:var(--ink3);font-size:9.5px">Move EBITDA via the levers → enterprise value retraces in real time. ${valMode==='ipo'?'Public payments-peer multiples (12.5–17×).':'Helios/PE marks (9–12×).'}</text>
+    <rect x="16" y="102" width="120" height="46" rx="7" fill="#101a2b" stroke="#3fa9ff"/>
+    <text x="76" y="119" text-anchor="middle" style="fill:var(--ink2);font-size:9px">Adj. EBITDA</text>
+    <text x="76" y="138" text-anchor="middle" style="fill:#fff;font-family:var(--mono);font-size:15px">${F.m0(ebd)}</text>
+    <line class="wf-conn" x1="136" y1="125" x2="208" y2="91"/>
+    <line class="wf-conn" x1="136" y1="125" x2="208" y2="171"/>
+    <text x="170" y="96" text-anchor="middle" style="fill:var(--neg);font-size:9px;font-family:var(--mono)">×5.8 street</text>
+    <text x="170" y="186" text-anchor="middle" style="fill:var(--pos);font-size:9px;font-family:var(--mono)">×12 peers</text>
+    <rect x="208" y="69" width="162" height="46" rx="7" fill="#1a0f12" stroke="var(--neg)"/>
+    <text x="220" y="86" style="fill:var(--ink3);font-size:9px">Where the market is (CABP)</text>
+    <text x="220" y="105" style="fill:var(--neg);font-family:var(--mono);font-size:15px">${F.m0(street)}</text>
+    <rect x="208" y="147" width="162" height="46" rx="7" fill="#0f1a14" stroke="var(--pos)"/>
+    <text x="220" y="164" style="fill:var(--ink3);font-size:9px">Intrinsic · the engine</text>
+    <text x="220" y="183" style="fill:var(--pos);font-family:var(--mono);font-size:15px">${F.m0(engine)}</text>
+    <line x1="384" y1="92" x2="384" y2="170" stroke="var(--gold)" stroke-width="1" stroke-dasharray="3 3"/>
+    <rect x="398" y="107" width="150" height="44" rx="7" fill="#1a1304" stroke="var(--gold)"/>
+    <text x="408" y="124" style="fill:var(--ink2);font-size:9px">Re-rating gap</text>
+    <text x="408" y="143" style="fill:#f5b942;font-family:var(--mono);font-size:16px">${F.m0(gap)}</text>
+    <text x="280" y="223" text-anchor="middle" style="fill:var(--ink3);font-size:9px">IPO July 2023 at 335p = £851m. Move EBITDA on the levers and both values retrace in real time.</text>
   </svg>`;
 }
 
@@ -757,8 +782,8 @@ VIEWS.enterprise=function(m){
   const stages=[
     ["Clients","592 active",m.income,"DFIs, MTOs, banks, central banks, governments"],
     ["Products","FX · payments · trade · pensions",m.income*0.86,"originate the economic flow"],
-    ["Payments",F.bn(BASE.fxVolBn*m.vf),m.fx+m.payments,"190 countries, 450 pairs"],
-    ["FX",F.m0(m.fx),m.fx,"100 currencies on EMpowerFX"],
+    ["Payments",F.bn(BASE.fxVolBn*m.vf),m.fx+m.payments,"190 countries, 800 pairs"],
+    ["FX",F.m0(m.fx),m.fx,"120 currencies on EMpower FX"],
     ["Correspondent network","10 core nostros",m.fx*0.7,"Citi, StanChart, Standard Bank…"],
     ["Local banks","settlement rails",m.fx*0.55,"Ecobank, KCB, GTBank, GHIPSS"],
     ["Recipients","end beneficiaries",m.fx*0.5,"businesses, pensioners, aid recipients"]
@@ -834,7 +859,7 @@ VIEWS.revenue=function(m){
     </div>
     <div class="card"><div class="ch"><h3>REVENUE CONCENTRATION</h3><span class="tag gold">top 5 = ${F.pct0(topCorr.slice(0,5).reduce((a,c)=>a+c.rev,0)/m.corr.reduce((a,c)=>a+c.rev,0))}</span></div>
       ${concentration(m.corr.map(c=>c.rev))}
-      <div class="flowtag" style="margin-top:6px">Lorenz-style curve — concentration is the CEO's risk &amp; pricing-power lens. A steep curve means a handful of lanes carry the book.</div>
+      <div class="flowtag" style="margin-top:6px">Lorenz-style curve — a read on concentration risk and pricing power. A steep curve means a handful of lanes carry the book.</div>
     </div>
   </div>`;
 };
@@ -853,45 +878,50 @@ function concentration(vals){
 }
 
 VIEWS.cost=function(m){
-  const cats=[
-    {label:"Operations (staff/tech/vendors)",value:m.opex,color:"#3fa9ff"},
-    {label:"Compliance (KYC/AML/sanctions)",value:m.compliance,color:"#ff5d6c"},
-    {label:"Correspondent & settlement",value:m.network,color:"#9b7bff"},
-    {label:"Liquidity & funding",value:m.funding,color:"#ffb13d"},
-    {label:"Depreciation & amortisation",value:m.da,color:"#34d3c4"}
+  const opx=[
+    {label:"Staff & people",value:m.staff,color:"#3fa9ff"},
+    {label:"Technology & platform",value:m.tech,color:"#34d3c4"},
+    {label:"Financial crime & compliance",value:m.compliance,color:"#ff5d6c"},
+    {label:"Premises, vendors & other",value:m.premises,color:"#9be36a"},
+    {label:"Correspondent & settlement",value:m.network,color:"#9b7bff"}
   ];
-  const tot=cats.reduce((a,c)=>a+c.value,0);
+  const cashOpex=m.cashOpex;
   const wf=[{label:"Income",value:m.income,type:"start"},
-    {label:"Operations",value:-m.opex,type:"delta"},{label:"Compliance",value:-m.compliance,type:"delta"},
-    {label:"Network",value:-m.network,type:"delta"},{label:"Funding",value:-m.funding,type:"delta"},
-    {label:"D&A",value:-m.da,type:"delta"},{label:"Pre-tax profit",value:m.pbt,type:"end"}];
+    {label:"Staff",value:-m.staff,type:"delta"},{label:"Technology",value:-m.tech,type:"delta"},
+    {label:"Compliance",value:-m.compliance,type:"delta"},{label:"Network",value:-m.network,type:"delta"},
+    {label:"Premises/other",value:-m.premises,type:"delta"},{label:"Adj. EBITDA",value:m.ebitda,type:"end"}];
+  const below=[{label:"Adj. EBITDA",value:m.ebitda,type:"start"},
+    {label:"Intangible amort.",value:-m.amort,type:"delta"},{label:"Depreciation",value:-m.da,type:"delta"},
+    {label:"Adjusting items",value:-m.adjusting,type:"delta"},{label:"Tax",value:-m.tax,type:"delta"},
+    {label:"Net profit",value:m.netProfit,type:"end"}];
   return `
   <div class="viewhead"><div><div class="kicker">Level 4 · Cost Engine</div>
     <h2>Where the money goes — and what's avoidable</h2>
-    <p>Total cost <b>${F.m0(tot)}</b> · cost-income <b>${F.pct(m.cir)}</b>. <b style="color:#ff5d6c">${F.m(m.compliance)} of compliance</b> and <b style="color:#ffb13d">${F.m(m.funding)} of funding drag</b> are the two most attackable lines — automate one, release the other.</p></div>
+    <p>Cash operating cost <b>${F.m0(cashOpex)}</b> on <b>${F.m0(m.income)}</b> income — a <b>${F.pct(m.cir)}</b> cost-income ratio, high for a scalable payments platform (specialist-peer average ~62%). <b style="color:#3fa9ff">Staff is the dominant line at ${F.m0(m.staff)}</b>; <b style="color:#ff5d6c">financial-crime compliance (${F.m(m.compliance)})</b> is the most attackable through automation.</p></div>
     <div style="text-align:right"><div class="scenbadge">cost / income</div><div class="mono" style="font-size:20px;color:${m.cir<0.66?'var(--pos)':'var(--gold)'}">${F.pct(m.cir)}</div></div></div>
   <div class="grid2" style="margin-bottom:14px">
-    <div class="card"><div class="ch"><h3>INCOME → PRE-TAX PROFIT WATERFALL</h3><span class="tag ${m.pbt>0?'pos':'neg'}">${F.m0(m.pbt)} PBT</span></div>${waterfall(wf,{h:230})}</div>
-    <div class="card"><div class="ch"><h3>COST ALLOCATION</h3></div>
-      <div style="display:flex;gap:18px;align-items:center">${donut(cats,{center:F.m0(tot),sub:'total cost'})}
-      <div style="flex:1">${cats.map(c=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${c.color};margin-right:7px"></span>${c.label}</span><b class="mono">${F.m(c.value)}</b></div>`).join('')}</div></div></div>
+    <div class="card"><div class="ch"><h3>INCOME → ADJUSTED EBITDA</h3><span class="tag ${m.ebitda>0?'pos':'neg'}">${F.m0(m.ebitda)}</span></div>${waterfall(wf,{h:230})}</div>
+    <div class="card"><div class="ch"><h3>OPERATING COST STACK</h3></div>
+      <div style="display:flex;gap:18px;align-items:center">${donut(opx,{center:F.m0(cashOpex),sub:'cash opex'})}
+      <div style="flex:1">${opx.map(c=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${c.color};margin-right:7px"></span>${c.label}</span><b class="mono">${F.m(c.value)}</b></div>`).join('')}</div></div></div>
   </div>
-  <div class="grid2">
-    <div class="card"><div class="ch"><h3>COMPLIANCE COST HEATMAP — BY CORRIDOR RISK</h3></div>
-      ${heatmap(["KYC","AML monitoring","Sanctions","Investigations"],["NGN","GHS","CDF","SLE","KES","ZAR"],
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>ADJUSTED EBITDA → NET PROFIT</h3><span class="tag ${m.netProfit>0?'pos':'neg'}">${F.m0(m.netProfit)}</span></div>${waterfall(below,{h:230})}
+      <div class="flowtag" style="margin-top:6px">Below EBITDA: amortisation of acquired intangibles (Segovia / EMpower), depreciation, and adjusting/realignment items bridge to statutory net profit.</div></div>
+    <div class="card"><div class="ch"><h3>FINANCIAL-CRIME COST BY CORRIDOR RISK</h3></div>
+      ${heatmap(["KYC onboarding","AML monitoring","Sanctions","Investigations"],["NGN","GHS","CDF","SLE","KES","ZAR"],
         [[1.4,0.9,0.7,0.5,0.6,0.4],[1.8,1.1,0.9,0.6,0.7,0.4],[1.1,0.8,1.0,0.7,0.4,0.3],[1.2,0.7,1.1,0.8,0.3,0.2]],{cw:54,lw:108,fmt:v=>'£'+v.toFixed(1)})}
-      <div class="flowtag" style="margin-top:6px">High-risk currencies (NGN, GHS, CDF, SLE) absorb disproportionate financial-crime cost. <b>Perpetual KYC + ML triage cuts this ~37%</b> — pull the compliance lever.</div>
-    </div>
-    <div class="card"><div class="ch"><h3>AVOIDABLE COST POOL</h3><span class="tag pos">~£11m addressable</span></div>
-      ${hbars([
-        {label:"Manual KYC/AML rework",value:4.4,color:"#ff5d6c"},
-        {label:"Trapped-liquidity funding",value:2.4,color:"#ffb13d"},
-        {label:"Sub-scale corr. fees",value:1.6,color:"#9b7bff"},
-        {label:"Failed-payment repair",value:1.3,color:"#ff5d6c"},
-        {label:"Duplicate vendor tooling",value:1.1,color:"#3fa9ff"}
-      ],{labelW:160,w:520})}
-      <div class="flowtag" style="margin-top:6px">Roughly <b style="color:#37d39a">${F.pct0(11/tot)} of the cost base</b> is structurally avoidable — the Action Centre quantifies each.</div>
-    </div>
+      <div class="flowtag" style="margin-top:6px">High-risk currencies absorb most of the ${F.m(m.compliance)} financial-crime spend. Perpetual KYC + ML triage cuts it ~37% — the highest-certainty return move.</div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>AVOIDABLE COST POOL</h3><span class="tag pos">~£11m addressable</span></div>
+    ${hbars([
+      {label:"Manual KYC / AML rework",value:4.4,color:"#ff5d6c"},
+      {label:"Trapped-liquidity opportunity cost",value:2.4,color:"#ffb13d"},
+      {label:"Sub-scale correspondent fees",value:1.6,color:"#9b7bff"},
+      {label:"Failed-payment repair",value:1.3,color:"#ff5d6c"},
+      {label:"Duplicate vendor tooling",value:1.1,color:"#3fa9ff"}
+    ],{labelW:175,w:520})}
+    <div class="flowtag" style="margin-top:6px"><b style="color:#37d39a">${F.pct0(11/cashOpex)} of the operating cost base</b> is structurally avoidable — each line is quantified to a return impact in the Action Centre.</div>
   </div>`;
 };
 
@@ -903,7 +933,7 @@ VIEWS.corridor=function(m){
       <td class="l"><span class="tag blue" style="margin-right:6px">${c[2]}</span>${c[0]} → ${c[1]}</td>
       <td>${F.bn(c[5]*m.vf)}</td><td>${F.m(o.rev)}</td>
       <td>${(o.rev/(c[5]*m.vf*1000)*10000).toFixed(0)}bps</td>
-      <td>${c[12]}h</td><td style="color:${c[13]>1.5?'var(--neg)':'var(--ink2)'}">${c[13]}%</td>
+      <td>${c[11]}h</td><td style="color:${c[12]>1.5?'var(--neg)':'var(--ink2)'}">${c[12]}%</td>
       <td class="bar-cell" style="color:${epColor(o.ep)}"><span class="minibar" style="width:${mb}px;background:${epColor(o.ep)};margin-right:7px"></span>${F.signm(o.ep)}</td></tr>`;
   }).join("");
   const pos=m.corr.filter(c=>c.ep>=0).reduce((a,c)=>a+c.ep,0);
@@ -935,7 +965,7 @@ VIEWS.client=function(m){
   return `
   <div class="viewhead"><div><div class="kicker">Level 6 · Client Intelligence</div>
     <h2>Which relationships create economic profit</h2>
-    <p>${m.clients.length} of 592 active relationships shown. The twin clusters them by segment and ranks by economic profit — exposing which to <b>grow, reprice or exit</b>.</p></div></div>
+    <p>${m.clients.length} of 592 active relationships shown, clustered by segment and ranked by economic profit — exposing which to <b>grow, reprice or exit</b>.</p></div></div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card"><div class="ch"><h3>CLIENT CLUSTERING — REVENUE vs ECONOMIC PROFIT</h3></div>
       ${scatter(m.clients.map(c=>({x:c.rev,y:c.ep,r:5+c.cap,label:'',color:segColor[c.cl[1]]||'#3fa9ff'})),{xlab:'Revenue £m',ylab:'Economic profit £m',h:280})}
@@ -993,7 +1023,7 @@ VIEWS.liquidity=function(m){
   return `
   <div class="viewhead"><div><div class="kicker">Level 8 · Liquidity Twin</div>
     <h2>Where the bank's money sleeps</h2>
-    <p>${F.m0(totBal)} across 12 nostro currencies, of which <b style="color:#ff5d6c">${F.m0(totTrap)} is trapped</b> (capital controls, settlement buffers, minimum balances). Releasing it cuts funding cost and frees capital — pull the liquidity lever.</p></div>
+    <p>${F.m0(totBal)} across 12 nostro currencies, of which <b style="color:#ff5d6c">${F.m0(totTrap)} is trapped</b> (capital controls, settlement buffers, minimum balances). Redeploying it into earning assets lifts net interest income — pull the liquidity lever.</p></div>
     <div style="text-align:right"><div class="scenbadge">released this scenario</div><div class="mono pos" style="font-size:20px">${F.m0(released)}</div></div></div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card"><div class="ch"><h3>CURRENCY EXPOSURE MAP</h3></div>
@@ -1002,7 +1032,7 @@ VIEWS.liquidity=function(m){
     </div>
     <div class="card"><div class="ch"><h3>TRAPPED vs DEPLOYABLE LIQUIDITY</h3></div>
       ${hbars(NOSTRO.slice(0,9).map(n=>({label:n[0],value:n[2],disp:F.m0(n[2]),color:n[2]>10?'#ff5d6c':'#ffb13d'})),{labelW:50,w:520})}
-      <div class="flowtag" style="margin-top:6px">Funding drag from trapped balances ≈ <b style="color:#ffb13d">${F.m(m.funding)}</b> at current scenario.</div>
+      <div class="flowtag" style="margin-top:6px">Income foregone if these stay idle ≈ <b style="color:#ffb13d">${F.m(BASE.trappedM*0.03)}</b> a year — the lever redeploys them.</div>
     </div>
   </div>
   <div class="card"><div class="ch"><h3>NOSTRO UTILISATION DASHBOARD</h3></div>
@@ -1019,7 +1049,7 @@ VIEWS.ep=function(m){
     {label:"Liquidity",value:-cc[9],type:"delta"},
     {label:"Compliance",value:-cc[8],type:"delta"},
     {label:"Operations",value:-cc[7]*0.5,type:"delta"},
-    {label:"Capital charge",value:-cc[11]*COE,type:"delta"},
+    {label:"Capital charge",value:-cc[10]*COE,type:"delta"},
     {label:"Economic profit",value:c.ep,type:"end"}
   ];
   // aggregations
@@ -1061,11 +1091,11 @@ VIEWS.action=function(m){
   </div>
   <div class="grid2">
     <div class="card"><div class="ch"><h3>COMBINED IMPACT — IF YOU APPLY EVERYTHING</h3></div>
-      ${waterfall([{label:"ROE base",value:b.roe*100,type:"start"},{label:"Reprice",value:1.3,type:"delta"},{label:"Exit tail",value:0.9,type:"delta"},{label:"Automate KYC",value:1.6,type:"delta"},{label:"Free liquidity",value:1.1,type:"delta"},{label:"Anchor DFIs",value:1.8,type:"delta"},{label:"ROE potential",value:b.roe*100+6.7,type:"end"}],{h:230})}
-      <div class="flowtag" style="margin-top:6px">Full programme lifts ROE from <b>${F.pct(b.roe)}</b> toward <b style="color:#37d39a">~${F.pct(b.roe+0.067)}</b> — comfortably above the ${F.pct0(COE)} cost of equity.</div>
+      ${waterfall([{label:"ROE base",value:b.roe*100,type:"start"},{label:"Reprice",value:0.9,type:"delta"},{label:"Exit tail",value:0.3,type:"delta"},{label:"Automate KYC",value:1.4,type:"delta"},{label:"Free liquidity",value:0.5,type:"delta"},{label:"Anchor DFIs",value:0.7,type:"delta"},{label:"ROE potential",value:b.roe*100+3.8,type:"end"}],{h:230})}
+      <div class="flowtag" style="margin-top:6px">Full programme lifts ROE from <b>${F.pct(b.roe)}</b> toward <b style="color:#37d39a">~${F.pct(b.roe+0.038)}</b> — clear of the ${F.pct0(COE)} cost of equity.</div>
     </div>
     <div class="card"><div class="ch"><h3>VALUE-CREATION LADDER</h3></div>
-      ${hbars(ACTIONS.map(a=>{const sv=JSON.parse(JSON.stringify(applied));const was=applied[a[0]];applied={};applied[a[0]]=true;const one=compute();applied=sv;return {label:a[1].length>24?a[1].slice(0,22)+'…':a[1],value:one.ep-b.ep,disp:F.signm(one.ep-b.ep)};}).sort((x,y)=>y.value-x.value),{diverging:true,w:520,rowH:26,labelW:165})}
+      ${hbars(ACTIONS.map(a=>{const one=compute(scenario,{[a[0]]:true});return {label:a[1].length>24?a[1].slice(0,22)+'…':a[1],value:one.ep-b.ep,disp:F.signm(one.ep-b.ep)};}).sort((x,y)=>y.value-x.value),{diverging:true,w:520,rowH:26,labelW:165})}
       <div class="flowtag" style="margin-top:6px">Standalone economic-profit impact of each move (before interactions).</div>
     </div>
   </div>`;
@@ -1074,7 +1104,7 @@ VIEWS.action=function(m){
 function actionTable(m,b,compact){
   return `<table><thead><tr><th></th><th class="l">Action</th>${compact?'':'<th class="l">Detail</th>'}<th>Revenue Δ</th><th>Cost Δ</th><th>Profit Δ</th><th>ROE Δ</th><th>Value Δ</th><th></th></tr></thead><tbody>${
     ACTIONS.map(a=>{
-      const sv=JSON.parse(JSON.stringify(applied)); applied={}; applied[a[0]]=true; const one=compute(); applied=sv;
+      const one=compute(scenario,{[a[0]]:true});
       const on=!!applied[a[0]];
       const dRoe=(one.roe-b.roe), dProf=(one.netProfit-b.netProfit), dVal=(one.val.base-b.val.base);
       return `<tr class="clk" onclick="toggleAction('${a[0]}')">
@@ -1144,22 +1174,21 @@ function answer(qraw){
   const has=(...w)=>w.some(x=>q.includes(x));
   let html="";
   if(has("roe","return on equity")&&has("why","move","driver","change")||q.includes("why did roe")){
-    const dr=[["FX margin",(m.fx-b.fx)],["volume",(m.payments-b.payments+m.trade-b.trade)],["rates",(m.nii-b.nii)],["compliance",-(m.compliance-b.compliance)],["liquidity",(b.funding-m.funding)],["actions",(m.actRev-m.actCost)]].filter(d=>Math.abs(d[1])>0.05).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+    const dr=[["FX margin",(m.fx-b.fx)],["volume",(m.payments-b.payments+m.trade-b.trade)],["rates",((m.nii-m.liqUplift)-(b.nii-b.liqUplift))],["compliance",-(m.compliance-b.compliance)],["liquidity",(m.liqUplift-b.liqUplift)],["actions",(m.actRev-m.actCost)]].filter(d=>Math.abs(d[1])>0.05).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
     html=`ROE is <b class="k">${F.pct(m.roe)}</b> versus a baseline of <b class="k">${F.pct(b.roe)}</b> — a move of <b class="k">${F.signbp((m.roe-b.roe)*10000)}</b>. ${dr.length?'The drivers, in order of impact: '+dr.map(d=>`${d[0]} <span class="k">${F.signm(d[1])}</span>`).join(', ')+'.':'You are at baseline — pull a lever to see ROE respond.'} Against a <b>${F.pct0(COE)}</b> cost of equity that is <b>${m.ep>=0?'value-creating':'value-destroying'}</b> economic profit of <b class="k">${F.signm(m.ep)}</b>.`;
   } else if(has("corridor","lane","route")&&has("destroy","worst","leak","negative","bad","losing")){
-    html=`<b>${neg.length} corridors</b> currently destroy value, costing <b class="k">${F.m(neg.reduce((a,c)=>a+c.ep,0))}</b> of economic profit: ${neg.map(c=>`<b>${c.c[0]}→${c.c[1]}</b> (${c.c[2]}) <span class="k">${F.signm(c.ep)}</span>`).join(', ')}. The pattern is clear — high financial-crime load and capital charge on thin frontier flows. <b>Reprice +18bps or re-route</b>; the twin shows each turning positive.`;
+    html=`<b>${neg.length} corridors</b> currently destroy value, costing <b class="k">${F.m(neg.reduce((a,c)=>a+c.ep,0))}</b> of economic profit: ${neg.map(c=>`<b>${c.c[0]}→${c.c[1]}</b> (${c.c[2]}) <span class="k">${F.signm(c.ep)}</span>`).join(', ')}. The pattern is clear — high financial-crime load and capital charge on thin frontier flows. <b>Reprice +18bps or re-route</b> and each turns positive.`;
   } else if(has("corridor","lane")&&has("best","top","profit","creat","strong")){
     html=`Your top value-creating corridors: ${top.map(c=>`<b>${c.c[0]}→${c.c[1]}</b> <span class="k">${F.signm(c.ep)}</span>`).join(', ')}. Together the positive book generates <b class="k">${F.m(m.corr.filter(c=>c.ep>0).reduce((a,c)=>a+c.ep,0))}</b>. These are the relationships to defend and clone.`;
   } else if(has("exit","offboard")&&has("mto","client","sub-scale","subscale","tail")){
-    const sv=JSON.parse(JSON.stringify(applied)); applied={exitmto:true,exitgov:true}; const x=compute(); applied=sv;
+    const x=compute(scenario,{exitmto:true,exitgov:true});
     html=`Exiting the sub-scale MTO cluster and the legacy government payroll would lift economic profit by <b class="k">${F.signm(x.ep-b.ep)}</b> and ROE by <b class="k">${F.signbp((x.roe-b.roe)*10000)}</b> — while <b>freeing ~£5m of capital and ${F.m0(8)} of liquidity</b>. They run negative EP today: revenue doesn't cover their compliance and capital. <span class="chip" onclick="applied.exitmto=true;applied.exitgov=true;refresh();renderRight();openConsole()">▶ apply both</span>`;
   } else if(has("compliance","kyc","aml","financial crime","sanction")){
     html=`Compliance costs <b class="k">${F.m(m.compliance)}</b> this scenario (base ${F.m(BASE.compliance)}). Frontier corridors (NGN, GHS, CDF, SLE) absorb the bulk. <b>Perpetual KYC + ML triage automation cuts it ~37% (£4.4m)</b> with no revenue loss — the single highest-certainty ROE move. <span class="chip" onclick="setLever('complianceAutomationPct',60);renderRight();openConsole()">▶ automate to 60%</span>`;
   } else if(has("liquidity","trapped","nostro","funding")){
-    html=`<b>£118m of nostro liquidity is trapped</b> (USD/NGN buffers, capital-controlled balances), driving <b class="k">${F.m(m.funding)}</b> of funding cost. Releasing 40% saves <b class="k">~£2.4m</b> and frees capital, lifting ROE by <b class="k">~30bps</b>. <span class="chip" onclick="setLever('liquidityReleasePct',40);renderRight();openConsole()">▶ release 40%</span>`;
-  } else if(has("valuation","worth","value","ipo","list","multiple","shareholder")){
-    const ipoMult={lo:12.5,base:15,hi:17};
-    html=`On the <b>${valMode==='ipo'?'IPO':'Helios'}</b> lens, CAB is worth <b class="k">${F.m0(m.val.base)}</b> (${m.val.mult.base}× ${F.m0(m.ebitda)} adj. EBITDA, range ${F.m0(m.val.lo)}–${F.m0(m.val.hi)}). The re-rating thesis: CAB earns a <b>29.8% EBITDA margin with double-digit growth</b> — fintech economics on a bank multiple. Closing that gap, plus the action programme, points to <b class="k">~${F.m0(m.ebitda*1.2*15)}</b> if listed.`;
+    html=`<b>£118m of nostro liquidity is trapped</b> (USD/NGN buffers, capital-controlled balances). Redeploying it into earning assets adds net interest income — releasing 40% lifts income by <b class="k">~£1.4m</b> and ROE by <b class="k">~20bps</b>. <span class="chip" onclick="setLever('liquidityReleasePct',40);renderRight();openConsole()">▶ release 40%</span>`;
+  } else if(has("valuation","worth","value","ipo","list","multiple","shareholder","share price","cheap","re-rate","rerate")){
+    html=`CABP trades at <b class="k">${BASE.sharePence}p</b> (~£${BASE.mktCap}m, ~5.8× EBITDA) — a depressed multiple set by the 2023 profit warning, down from £851m at IPO. On a payments-peer multiple of 12×, the same <b>${F.m0(m.ebitda)}</b> of adjusted EBITDA is worth <b class="k">${F.m0(m.ebitda*12)}</b> — a re-rating gap of <b class="k">${F.m0(m.ebitda*12-m.ebitda*5.8)}</b>. The margin (29.8%) and growth are already there; the action programme is what closes the gap and moves the rating.`;
   } else if(has("cost","avoidable","expense","efficiency")){
     html=`Total cost is <b class="k">${F.m0(m.opex+m.compliance+m.network+m.funding+m.da)}</b> at a <b>${F.pct(m.cir)}</b> cost-income ratio. About <b class="k">£11m is structurally avoidable</b>: manual KYC rework (£4.4m), trapped-liquidity funding (£2.4m), sub-scale correspondent fees (£1.6m), failed-payment repair (£1.3m), duplicate tooling (£1.1m). The Action Centre converts each into an ROE number.`;
   } else if(has("client","relationship","customer")){
@@ -1173,19 +1202,19 @@ function answer(qraw){
   } else if(has("summary","read-out","readout","overview","brief","how are we","state")){
     html=twinSummary(m,b);
   } else {
-    html=`I read the twin live. Try one of these — or ask about any corridor, client, currency, cost line or the valuation:`;
+    html=`I read the live model. Try one of these — or ask about any corridor, client, currency, cost line or the valuation:`;
   }
   return html;
 }
 function twinSummary(m,b){
-  return `<b>Twin read-out.</b> Income <b class="k">${F.m0(m.income)}</b>, adj. EBITDA <b class="k">${F.m0(m.ebitda)}</b> (${F.pct(m.ebitdaMargin)} margin), ROE <b class="k">${F.pct(m.roe)}</b> on a <b>${F.pct0(COE)}</b> cost of equity → economic profit <b class="k" style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b>. ${m.ep>=0?'The bank is creating shareholder value':'The bank is below its cost of equity'}. ${valMode==='ipo'?'If listed':'On the Helios mark'}, that implies <b class="k">${F.m0(m.val.base)}</b> of value. The biggest unbanked uplift sits in compliance automation and repricing the frontier tail.`;
+  return `<b>Twin read-out.</b> Income <b class="k">${F.m0(m.income)}</b>, adj. EBITDA <b class="k">${F.m0(m.ebitda)}</b> (${F.pct(m.ebitdaMargin)} margin), ROE <b class="k">${F.pct(m.roe)}</b> on a <b>${F.pct0(COE)}</b> cost of equity → economic profit <b class="k" style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b>. ${m.ep>=0?'The bank is creating shareholder value':'The bank is below its cost of equity'}. ${valMode==='engine'?'On a payments-peer multiple':'At the current CABP multiple'}, that implies <b class="k">${F.m0(m.val.base)}</b> of value. The biggest untapped uplift sits in compliance automation and repricing the frontier tail.`;
 }
 function methodReadout(){ return `<b>What's real, what's modelled, what's illustrative.</b><br><br>
-<b class="k" style="color:#37d39a">● Public (from filings)</b> — FY25 income £119m, adj. EBITDA £35m (29.8% margin), EPS 6.8p, FX/payment volume £41.9bn, 592 active clients, NII, total assets £1.82bn, Helios 100% ownership, 100-currency / 450-pair EMpowerFX coverage, and the published analyst consensus split. <i>Sources: CAB FY25 results & annual report; Helios; listed-peer filings (Wise, Western Union, Standard Chartered).</i><br><br>
+<b class="k" style="color:#37d39a">● Public (from filings)</b> — listed as <b>CAB Payments Holdings (LSE: CABP)</b>: share price ~80p, market cap ~£203m (IPO July 2023 at 335p / £851m); FY25 income £119m, adj. EBITDA £35m (29.8% margin), EPS 6.8p; FY24 ROE 10.81%, CET1 £126.3m, total assets £1.82bn; FX/payment volume £41.9bn, 592 active clients, 120 currencies / 800 pairs, 30+ central-bank and 390 local-bank relationships; £13.5bn moved for humanitarian and development purposes in 2024; plus the published analyst consensus. <i>Sources: CAB Payments FY24–FY25 results & annual report; LSE market data; listed-peer filings.</i><br><br>
 <b class="k" style="color:#3fa9ff">● Derived</b> — ROE, cost of equity, economic profit, cost-income, capital & liquidity ratios and valuation multiples: modelled from the public figures and listed-peer ratios.<br><br>
 <b class="k" style="color:#ffb13d">● Illustrative</b> — the corridor / client / correspondent / nostro line items are realistic <b>placeholders</b> shaped to CAB's known footprint (frontier African corridors, MTO/DFI/central-bank clients, Citi/StanChart/Ecobank correspondents). Trade-finance and per-transaction detail aren't public — these are plausible stand-ins. <b>Swap in the bank's own ledgers and every number becomes real; the engine doesn't change.</b><br><br>
 <b>This is a portable framework — a CEO's digital chief of staff.</b> The economic-profit engine, the value-chain spine and the visual grammar are bank-agnostic. Re-point the data modules and the same twin reads out any institution's economics: for <b>Nationwide</b> the "corridors" become mortgage and savings products, "correspondents" become funding & payment rails, "clients" become member segments — but the questions (where is value created, where does it leak, which actions lift returns) and the engine are identical. Each domain is a pluggable module an agent can re-populate per business model.`; }
-const SUGGEST=["Why did ROE move?","What's real vs modelled?","Which corridors destroy value?","What if we exit sub-scale MTOs?","How much compliance cost is avoidable?","How much liquidity is trapped?","What are we worth if we IPO'd?","Which clients lose money?","Give me a twin read-out"];
+const SUGGEST=["Why did ROE move?","What's real vs modelled?","Which corridors destroy value?","What if we exit sub-scale MTOs?","How much compliance cost is avoidable?","How much liquidity is trapped?","Are we cheap versus the share price?","Which clients lose money?","Give me a board read-out"];
 function openConsole(seed){
   const c=document.getElementById("console"); c.classList.add("open");
   if(seed) askTwin(seed==='summary'?'twin read-out':seed,true);
@@ -1211,17 +1240,17 @@ function genNote(){
   document.getElementById("noteout").innerHTML=`
   <div style="border:1px solid var(--line2);border-radius:9px;padding:16px;background:#0a0f18">
     <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px">
-      <div><b style="font-size:14px">Crown Agents Bank — Initiating Coverage</b><div class="dim3" style="font-size:10px">EQUITY RESEARCH · GENERATED BY THE TWIN · FY2025</div></div>
-      <div style="text-align:right"><span class="tag gold">${valMode==='ipo'?'BUY (if listed)':'HOLD — private'}</span><div class="mono" style="font-size:16px;margin-top:4px">TP ${F.m0(m.val.base)}</div></div>
+      <div><b style="font-size:14px">CAB Payments Holdings (LSE: CABP)</b><div class="dim3" style="font-size:10px">EQUITY RESEARCH NOTE · GENERATED LIVE · FY2025</div></div>
+      <div style="text-align:right"><span class="tag gold">BUY</span><div class="mono" style="font-size:16px;margin-top:4px">TP ${Math.round((m.ebitda*12)/BASE.shares*100)}p <span style="color:var(--ink3);font-size:11px">vs ${BASE.sharePence}p</span></div></div>
     </div>
     <div class="note" style="font-size:11.5px;line-height:1.65">
-      <b>Investment case.</b> Crown Agents Bank is a specialist emerging-markets payments and FX franchise with a 180-year heritage and a defensible network across Africa, the Caribbean and South-East Asia. FY25 delivered <b>total income of £119m (+12%)</b>, <b>adjusted EBITDA of £35m (+14%, 29.8% margin)</b> and <b>adjusted EPS of 6.8p</b> — <b>ahead of consensus on every line</b>. Wholesale and payment-FX volumes reached <b>£41.9bn (+13%)</b> across 100 currencies and 592 active clients.<br><br>
-      <b>What the market is missing.</b> The business compounds at fintech-grade margins yet is held privately on a payments-bank rating. On listed payment-peer multiples (Wise, Ebury, Western Union) the franchise would support <b>${F.m0(m.ebitda*12.5)}–${F.m0(m.ebitda*17)}</b> of enterprise value. The gap is the under-told FX network story.<br><br>
-      <b>Economic profit.</b> Group ROE of <b>${F.pct(m.roe)}</b> exceeds an estimated <b>${F.pct0(COE)}</b> cost of equity, generating positive economic profit of <b>${F.m(m.ep)}</b> — but dispersion is wide. A long tail of frontier corridors (NGN secondary, GHS, CDF, SLE) and sub-scale MTOs runs <b>negative EP</b>, masking the strength of the core.<br><br>
-      <b>Catalysts.</b> (i) repricing the value-destroying tail (+18bps); (ii) automating financial-crime operations (−£4.4m cost); (iii) releasing ~£118m of trapped nostro liquidity; (iv) anchoring new DFI mandates. Management execution on these would lift ROE toward <b>~${F.pct(b.roe+0.067)}</b> and re-rate the equity.<br><br>
-      <b>Risks.</b> Frontier-currency convertibility, correspondent-banking de-risking, regulatory and sanctions exposure on high-risk corridors, and rate-cycle sensitivity in net interest income.
+      <b>Investment case.</b> A specialist emerging-markets payments and FX franchise with near-200-year heritage and a network few can replicate — 120 currencies, 800 pairs, 190 countries, and 30+ central-bank and 390 local-bank relationships. After a difficult 2024 reset, FY25 delivered <b>income of £119m (+12%)</b>, <b>adjusted EBITDA of £35m (29.8% margin)</b> and <b>adjusted EPS of 6.8p</b> — <b>ahead of consensus on every line</b>. Wholesale and payment-FX volumes reached <b>£41.9bn (+13%)</b>.<br><br>
+      <b>What the market is missing.</b> CABP trades at <b>~5.8× EBITDA (£${BASE.mktCap}m)</b> — a distressed multiple set by the 2023 profit warning — while specialist payments peers carry 10–20×. On a 12× peer multiple the franchise supports <b>${F.m0(m.ebitda*12)}</b> (≈${Math.round((m.ebitda*12)/BASE.shares*100)}p/share). The recovery is in the numbers; it is not yet in the rating.<br><br>
+      <b>Economic profit.</b> Group ROE of <b>${F.pct(m.roe)}</b> sits just above an estimated <b>${F.pct0(COE)}</b> cost of equity — economic profit of <b>${F.m(m.ep)}</b>, but with wide dispersion. A long tail of frontier corridors (secondary NGN, GHS, CDF, SLE) and sub-scale MTOs runs <b>negative EP</b>, masking the strength of the core.<br><br>
+      <b>Catalysts.</b> (i) repricing the value-destroying tail; (ii) automating financial-crime operations (−£4.4m cost); (iii) redeploying ~£118m of trapped nostro liquidity; (iv) anchoring new development-finance mandates. Execution lifts ROE toward <b>~${F.pct(b.roe+0.038)}</b> and supports a re-rating.<br><br>
+      <b>Risks.</b> Frontier-currency convertibility (NGN/GHS), correspondent de-risking, sanctions exposure on high-risk corridors, and net-interest sensitivity to the rate cycle.
     </div>
-    <div class="dim3" style="font-size:9.5px;margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Generated live from the Economic Digital Twin · figures move with the Scenario Studio · illustrative, not investment advice.</div>
+    <div class="dim3" style="font-size:9.5px;margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Generated live from the economic model · figures move with the Scenario Studio · illustrative, not investment advice.</div>
   </div>`;
 }
 function genBoard(){
@@ -1229,13 +1258,13 @@ function genBoard(){
   const neg=m.corr.filter(c=>c.ep<0);
   document.getElementById("noteout").innerHTML=`
   <div style="border:1px solid var(--line2);border-radius:9px;padding:16px;background:#0a0f18">
-    <b style="font-size:14px">CEO Board Narrative — FY2025</b><div class="dim3" style="font-size:10px;margin-bottom:10px">GENERATED BY THE TWIN</div>
+    <b style="font-size:14px">Board narrative — FY2025</b><div class="dim3" style="font-size:10px;margin-bottom:10px">GENERATED LIVE</div>
     <div class="note" style="font-size:11.5px;line-height:1.65">
-      <b>1. We out-performed our own market.</b> Income £119m, EBITDA £35m, EPS 6.8p — ahead of consensus on every line. The analysts under-modelled our banking income by £5.7m. Our story is being told too conservatively.<br><br>
-      <b>2. We create economic value — but unevenly.</b> Group economic profit is <b>${F.m(m.ep)}</b> over cost of equity. Yet <b>${neg.length} corridors and ${m.clients.filter(c=>c.ep<0).length} relationships destroy value</b>. The core is stronger than the headline; the tail is dragging us.<br><br>
-      <b>3. Three moves change the trajectory.</b> Automate financial crime (−£4.4m, no revenue at risk). Reprice the frontier tail (+£2.4m). Release £118m of trapped liquidity. Together: ROE from <b>${F.pct(b.roe)}</b> toward <b>${F.pct(b.roe+0.067)}</b>.<br><br>
-      <b>4. This compounds into value.</b> On listed-peer economics the franchise is worth <b>${F.m0(m.ebitda*15)}</b>+. Every basis point of ROE we add is shareholder value Helios captures at exit.<br><br>
-      <b>The ask:</b> back the modernisation of the frontier rails and the financial-crime platform — the twin shows the payback in ROE, not just cost.
+      <b>1. We out-performed the market's model of us.</b> Income £119m, adjusted EBITDA £35m, EPS 6.8p — ahead of consensus on every line, with banking income £5.7m above where the analysts had it. The story is being told too conservatively.<br><br>
+      <b>2. We create economic value — but unevenly.</b> Group economic profit is <b>${F.m(m.ep)}</b> over the cost of equity. Yet <b>${neg.length} corridors and ${m.clients.filter(c=>c.ep<0).length} relationships destroy value</b>. The core is stronger than the headline; the tail is dragging it.<br><br>
+      <b>3. Three moves change the trajectory.</b> Automate financial crime (−£4.4m, no revenue at risk). Reprice the frontier tail (+£2.4m). Redeploy £118m of trapped liquidity. Together: ROE from <b>${F.pct(b.roe)}</b> toward <b>${F.pct(b.roe+0.038)}</b>.<br><br>
+      <b>4. This is where the share price re-rates.</b> The market values us at ~5.8× EBITDA (£${BASE.mktCap}m, from £851m at IPO); peers trade at 10–15×. Every basis point of ROE we add — and every point of dispersion we remove — narrows that gap.<br><br>
+      <b>The ask:</b> back the modernisation of the frontier rails and the financial-crime platform — the payback shows up in ROE, not just cost.
     </div>
   </div>`;
 }
