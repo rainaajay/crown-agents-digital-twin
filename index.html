@@ -856,53 +856,53 @@ function valuationTree(m){
 }
 
 VIEWS.enterprise=function(m){
-  const stages=[
-    ["Clients","592 active",m.income,"DFIs, MTOs, banks, central banks, governments"],
-    ["Products","FX · payments · trade · pensions",m.income*0.86,"originate the economic flow"],
-    ["Payments",F.bn(BASE.fxVolBn*m.vf),m.fx+m.payments,"190 countries, 800 pairs"],
-    ["FX",F.m0(m.fx),m.fx,"120 currencies on EMpower FX"],
-    ["Correspondent network","10 core nostros",m.fx*0.7,"Citi, StanChart, Standard Bank…"],
-    ["Local banks","settlement rails",m.fx*0.55,"Ecobank, KCB, GTBank, GHIPSS"],
-    ["Recipients","end beneficiaries",m.fx*0.5,"businesses, pensioners, aid recipients"]
+  const net=m.netProfit, coe=COE;
+  const bookEq=m.equity, bookRoe=net/bookEq, bookEP=net-coe*bookEq;
+  const mktCap=BASE.mktCap, mktRoe=net/mktCap, mktEP=net-coe*mktCap;
+  const ops=m.staff+m.tech+m.premises;
+  const cascade=[
+    {label:"Income",value:m.income,type:"start"},
+    {label:"Correspondent & settlement",value:-m.network,type:"delta"},
+    {label:"Compliance",value:-m.compliance,type:"delta"},
+    {label:"Operations",value:-ops,type:"delta"},
+    {label:"D&A + amort.",value:-(m.da+m.amort),type:"delta"},
+    {label:"Adjusting + tax",value:-(m.adjusting+m.tax),type:"delta"},
+    {label:"Capital charge",value:-m.capitalCharge,type:"delta"},
+    {label:"Economic profit",value:m.ep,type:"end"}
   ];
+  const basis=(lab,eq,roe,ep,note,hi)=>`<div class="card" style="${hi?'border-color:var(--gold)':''}">
+    <div class="ch"><h3>${lab}</h3><span class="tag ${ep>=0?'pos':'neg'}">${F.signm(ep)} economic profit</span></div>
+    <div class="row" style="gap:18px">
+      <div class="stat"><div class="lab">Equity base</div><div class="num" style="font-size:18px">£${eq.toFixed(0)}m</div></div>
+      <div class="stat"><div class="lab">Return</div><div class="num" style="font-size:18px;color:${roe>=coe?'var(--pos)':'var(--neg)'}">${F.pct(roe)}</div></div>
+      <div class="stat"><div class="lab">Cost of equity</div><div class="num" style="font-size:18px">${F.pct0(coe)}</div></div>
+    </div>
+    ${spreadBar(roe,coe)}
+    <div class="flowtag" style="margin-top:7px">${note}</div></div>`;
   return `
-  <div class="viewhead"><div><div class="kicker">The economic engine · Value chain</div>
-    <h2>The bank as a value-creation system</h2>
-    <p>Value is created at the top of the chain and consumed at every stage below. Each stage carries revenue, direct &amp; indirect cost, capital, liquidity and compliance effort — netting to economic profit.</p></div></div>
+  <div class="viewhead"><div><div class="kicker">The economic engine · Value creation</div>
+    <h2>Are we creating value?</h2>
+    <p>Revenue is earned; costs and capital consume it. What's left only counts as value <b>created</b> if it beats the cost of the capital employed. The cascade below is fully additive — it reconciles to the P&L — and the verdict is shown two ways: on the bank's own <b>book equity</b>, and on its <b>market value</b>.</p></div></div>
   <div class="card hero" style="margin-bottom:14px">
-    <div class="ch"><h3>VALUE CHAIN — REVENUE CASCADE & COST DRAG</h3><span class="meta">flow narrows as cost & capital are consumed</span></div>
-    ${valueChain(stages,m)}
+    <div class="ch"><h3>INCOME → ECONOMIC PROFIT</h3><span class="meta">additive · reconciles to the £${m.income.toFixed(0)}m P&L</span></div>
+    ${waterfall(cascade,{h:240})}
+    <div class="flowtag" style="margin-top:6px">Every pound of the £${m.income.toFixed(0)}m income is consumed by the network (correspondent + compliance), the operation (staff + tech), D&A, tax and the <b>cost of capital</b> (CoE ${F.pct0(coe)} × £${bookEq.toFixed(0)}m equity) — leaving economic profit of <b style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b>.</div>
   </div>
-  <div class="grid2">
-    <div class="card"><div class="ch"><h3>ECONOMIC PROFIT BY STAGE</h3></div>
-      ${hbars([
-        {label:"Client origination",value:6.8},{label:"Product & pricing",value:4.2},
-        {label:"Payments execution",value:2.1},{label:"FX & treasury",value:3.6},
-        {label:"Correspondent layer",value:-2.4},{label:"Local settlement",value:-1.9},
-        {label:"Compliance overlay",value:-3.1}
-      ],{diverging:true,w:520})}
-    </div>
-    <div class="card"><div class="ch"><h3>WHAT EACH STAGE CONSUMES</h3></div>
-      ${heatmap(["Direct cost","Compliance","Liquidity","Capital","Risk"],["Clients","Products","Payments","FX","Corr.","Local"],
-        [[2,3,4,3,5,4],[1,4,3,2,3,2],[1,2,5,4,5,4],[2,3,3,4,4,3],[2,3,4,3,5,5]],{cw:62,lw:90,fmt:v=>['·','▪','▪▪','▰▰','▰▰▰'][Math.min(4,Math.round(v-1))]})}
-      <div class="flowtag" style="margin-top:6px">Darker = heavier consumption. The correspondent + local + compliance band is where the chain leaks.</div>
-    </div>
+  <div class="grid2" style="margin-bottom:14px">
+    ${basis('Book basis · internal',bookEq,bookRoe,bookEP,'On its own equity the bank earns <b>'+F.pct(bookRoe)+'</b> against an <b>'+F.pct0(coe)+'</b> cost of capital — roughly breakeven on economic profit.',true)}
+    ${basis('Market basis · external',mktCap,mktRoe,mktEP,'At the £'+mktCap+'m market price, current earnings are only a <b>'+F.pct(mktRoe)+'</b> yield — below the '+F.pct0(coe)+' required. The price embeds <b>growth not yet delivered</b>, which is why the shares and the StoneX bid sit where they do.',false)}
+  </div>
+  <div class="card"><div class="ch"><h3>THE CHAIN — AND WHY THE BACK HALF IS THE MOAT</h3></div>
+    <div class="note"><b>Front (creates revenue):</b> clients → products → FX &amp; payments — £41.9bn across 120 currencies earns the ${F.m0(m.fx+m.payments)} FX-and-payments line. <b>Back (the moat):</b> correspondents, 390 local banks, 30+ central banks and licences in markets others have exited — it shows as ${F.m(m.network+m.compliance)} of cost, but that hard-to-replicate access <b>is the franchise</b>, and it widens as rivals de-risk. The strategic question is whether the moat is <b>priced</b> as fully as it is <b>paid for</b>.</div>
   </div>`;
 };
-function valueChain(stages,m){
-  const W=960,H=300,n=stages.length,colW=W/n;
-  const max=stages[0][2];
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
-  stages.forEach((st,i)=>{
-    const h=40+ (st[2]/max)*150; const x=colW*i+10, w=colW-20, y=(H-60-h)/2+10;
-    const col=`hsl(${205-i*8},${55-i*4}%,${52-i*3}%)`;
-    s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${col}" opacity="0.82"/>`;
-    s+=`<text x="${x+w/2}" y="${y+h/2-4}" text-anchor="middle" style="fill:#06121f;font-weight:700;font-size:12px">${st[0]}</text>`;
-    s+=`<text x="${x+w/2}" y="${y+h/2+12}" text-anchor="middle" style="fill:#0a1a2a;font-size:9px;font-family:var(--mono)">${F.m0(st[2])}</text>`;
-    s+=`<text x="${x+w/2}" y="${y+h+16}" text-anchor="middle" style="fill:var(--ink3);font-size:8.5px">${st[1]}</text>`;
-    if(i<n-1){const yc=H/2-20;s+=`<path d="M${x+w} ${yc} l10 0 l-4 -4 m4 4 l-4 4" stroke="var(--ink3)" fill="none" stroke-width="1.2"/>`;}
-  });
-  return s+`</svg>`;
+function spreadBar(roe,coe){
+  const max=Math.max(roe,coe,0.13), W=520,H=28, xr=v=>8+(W-16)*(v/max);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="margin-top:8px">
+    <rect x="8" y="8" width="${Math.max(xr(roe)-8,2)}" height="12" rx="3" fill="${roe>=coe?'#37d39a':'#ff5d6c'}" opacity="0.85"/>
+    <line x1="${xr(coe)}" y1="2" x2="${xr(coe)}" y2="26" stroke="#f5b942" stroke-width="2" stroke-dasharray="3 2"/>
+    <text x="${xr(coe)+4}" y="${H-3}" style="fill:#f5b942;font-size:9px;font-family:var(--mono)">cost of capital ${(coe*100).toFixed(0)}%</text>
+  </svg>`;
 }
 
 VIEWS.revenue=function(m){
@@ -1026,7 +1026,7 @@ VIEWS.corridor=function(m){
   </div>
   <div class="card"><div class="ch"><h3>CORRIDOR LEAGUE TABLE</h3><span class="meta">sorted by economic profit · click to inspect</span></div>
     <table><thead><tr><th class="l">Corridor</th><th>Flow</th><th>Revenue</th><th>Margin</th><th>Settle</th><th>Fail</th><th>Economic Profit</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="flowtag" style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px">These 16 named lanes are ~50% of FX &amp; payments flow; the rest is a long tail. <b>Corridors and clients are two cuts of the same £119m income — not additive to each other.</b></div>
+    <div class="flowtag" style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px">These 16 named lanes are ~70% of the <b>FX &amp; payments book</b> (~£79m of the £119m income); the rest is a long tail. <b>Corridors and clients are two views of the same revenue — not additive to each other.</b></div>
   </div>`;
 };
 
@@ -1155,7 +1155,7 @@ VIEWS.ep=function(m){
       ${(()=>{const seg={};m.clients.forEach(c=>seg[c.cl[1]]=(seg[c.cl[1]]||0)+c.ep);return hbars(Object.entries(seg).sort((a,b)=>b[1]-a[1]).map(e=>({label:e[0],value:e[1],disp:F.signm(e[1])})),{diverging:true,w:330,rowH:22,labelW:100});})()}
     </div>
     <div class="card"><div class="ch"><h3>BY PRODUCT</h3></div>
-      ${hbars([{label:"FX",value:8.2},{label:"Payments",value:4.6},{label:"Banking/NII",value:3.1},{label:"Trade",value:1.4},{label:"Inv. mgmt",value:0.8}],{diverging:true,w:330,rowH:22,labelW:90})}
+      ${hbars([{label:"FX",value:8.2},{label:"Payments",value:4.6},{label:"Banking",value:3.1},{label:"Trade",value:1.4}],{diverging:true,w:330,rowH:22,labelW:90})}
     </div>
     <div class="card"><div class="ch"><h3>BY COUNTRY (DEST.)</h3></div>
       ${(()=>{const ct={};m.corr.forEach(o=>ct[o.c[1]]=(ct[o.c[1]]||0)+o.ep);return hbars(Object.entries(ct).sort((a,b)=>b[1]-a[1]).slice(0,7).map(e=>({label:e[0],value:e[1],disp:F.signm(e[1])})),{diverging:true,w:330,rowH:22,labelW:95});})()}
@@ -1387,7 +1387,7 @@ function actionTable(m,b,compact){
 const RIGHTCTX={
   cockpit:["The cockpit","The whole bank on one screen — pull a lever and every number re-prices.","FX margin"],
   market:["Market vs intrinsic","Use the top-bar toggle to switch the Street / Engine lens.","Volume growth"],
-  enterprise:["Value chain","Where value is created and consumed, stage by stage.","Volume growth"],
+  enterprise:["Value creation","How £119m of income becomes economic profit — measured on book and market basis.",""],
   revenue:["Revenue engine","FX is the biggest lever — try the FX margin.","FX margin"],
   cost:["Cost engine","Compliance automation is the most attackable line.","Compliance automation"],
   ep:["Economic profit","Group ROE against cost of equity, decomposed every way.","FX margin"],
@@ -1469,7 +1469,7 @@ function renderRight(){
 const NAVGROUPS=[
   {sec:"", items:[["cockpit","◎ Cockpit"]]},
   {sec:"Market", items:[["market","How the market sees us"]]},
-  {sec:"The economic engine", items:[["enterprise","Value chain"],["revenue","Revenue engine"],["cost","Cost engine"],["ep","Economic profit"]]},
+  {sec:"The economic engine", items:[["revenue","Revenue engine"],["cost","Cost engine"],["enterprise","Value creation"],["ep","Economic profit"]]},
   {sec:"Where value is made", items:[["corridor","Corridors"],["client","Clients"],["strategic","Strategic outlook"]]},
   {sec:"Operations & risk", items:[["network","Correspondent network"],["liquidity","Liquidity & treasury"],["ops","Operational health"],["risk","Risk & compliance"]]},
   {sec:"The outside world", items:[["tech","Technology & disruption"],["news","News & intelligence"]]},
