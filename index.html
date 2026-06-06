@@ -666,6 +666,27 @@ function renderKPIs(m){
   }).join("");
 }
 
+/* ============================================================ CLIENTS & COMPETITORS (researched) ============================================================ */
+// name, % of income, trend(up/flat/down), who, examples, why CAB, how it could change
+const CLIENT_SEGMENTS = [
+  ["Commercial & regional banks",48,"up","Large global banks (several top-20) needing frontier-currency liquidity and the last-mile settlement they have de-risked away from, plus local and regional banks in Africa, the Caribbean and S/SE Asia needing hard-currency clearing and access to global rails.","Visa (FX liquidity for bank-to-bank settlement); several top-20 global banks (unnamed); many regional African, Caribbean and Asian banks.","A specialist correspondent giving access to 120+ currencies, 800+ pairs and ~390 local-bank relationships in markets where global correspondents have withdrawn.","The anchor segment. Further de-risking by global banks sends more flow to CAB; falling rates compress the net-interest part of the relationship."],
+  ["Central banks & sovereigns",12,"flat","30+ central banks and monetary authorities in frontier and emerging markets, plus finance ministries and sovereign treasuries — rooted in the 200-year Crown Agents heritage.","30+ central-bank counterparties (unnamed); recognised at the 2025 Central Banking Awards.","Reserve management, reliable hard-currency FX, settlement assurance and global-market access via a trusted, UK-regulated counterparty.","Sticky and reputationally valuable, but exposed to sovereign and FX-reserve stress and sanctions. Central-bank digital currencies are the key watch item — CAB is exploring central-bank-backed stablecoins."],
+  ["Fintechs & money-transfer operators",20,"up","Digital cross-border payment firms, remittance fintechs and MTOs needing wholesale FX and payout into hard-to-reach corridors (mobile money, local bank, cash).","MFS Africa / Onafriq (pan-African mobile-money payout); Cambridge Global Payments / Corpay for Asia and Africa; the Visa Direct partnership reaching wallets and cards in 190+ countries.","CAB is the wholesale bridge into emerging markets — FX, settlement and last-mile delivery, so fintechs can offer corridors they could not build alone.","The principal growth engine (+66% half-on-half in H2 2025, FX volumes +52%) — but margin-compressing as fintechs scale, with disintermediation risk if large MTOs build their own central-bank rails."],
+  ["Corporates & commodity traders",8,"up","Multinational corporates and commodity traders operating across frontier markets, needing cross-border payments, FX hedging and trade finance where mainstream banks have exited.","Not individually named — commercial enterprises and commodity-trade flows across Africa, the Caribbean and S/SE Asia.","Reliable, fast, cost-effective payments, frontier FX and trade finance, with local-currency access and settlement certainty.","Tied to frontier trade and commodity cycles; growing through geographic expansion (the Americas are already ~35% of flows, plus the new New York and Abu Dhabi offices)."],
+  ["Pension & payroll administrators",2,"up","Pension funds, administrators and payroll providers making recurring cross-border pension and salary payments to beneficiaries in emerging markets.","Administrators on the EMpower Pensions platform (biometric proof-of-life plus international pension payroll).","Specialist cross-border pensions and payroll, with FX, last-mile delivery and proof-of-life fraud control.","A sticky, recurring-revenue niche; upside from digitising cross-border pensions and bundling with government and employer payroll."],
+  ["International development organisations",12,"down","Multilaterals, donor governments, UN agencies, NGOs and foundations moving aid and programme funding into low-income and fragile markets — bulk transfers plus many small last-mile payments.","Not named by CAB; the aid ecosystem (FCDO, Gavi, USAID, SIDA programmes) sits alongside the separate Crown Agents consultancy.","Fast, predictable, traceable disbursement into markets with limited infrastructure, with FX and compliance handled.","The most at-risk segment (£13.9m, −9%): USAID closed in July 2025 and FCDO cut aid from 0.5% to 0.3% of GNI — partly cushioned by aid localisation (more last-mile payments)."]
+];
+// name, threat(high/med/low), overlap with CAB
+const COMP_INTEL = [
+  ["StoneX (the bidder)","high","Near-total — same frontier settlement and client segments. The live acquirer (bid 110p / £287m); ~$5bn market cap."],
+  ["Ebury (Santander)","high","Highest direct overlap — emerging-market and non-G10 FX and payments; 27,000+ business clients, moving up into institutional. London IPO planned 2026."],
+  ["Wise (Platform / Business)","med","Wise Platform sells banks a way to bypass correspondents (Morgan Stanley and others); Wise Business competes for SME emerging-market FX. ~14× EV/EBITDA."],
+  ["PAPSS (Afreximbank)","med","Structurally threatening — instant intra-African settlement in local currency, removing the hard-currency leg CAB earns on. ~19 countries, 150+ banks; multi-year build."],
+  ["Stablecoins (USDC / USDT)","med","Attacks both cost and access in dollar-scarce markets — near-instant settlement to anyone online. Rising over 2–5 years; CAB exploring an off-ramp."],
+  ["Convera (ex-WU BS)","low","Moderate — B2B emerging-market payouts and FX; 30,000+ customers incl. NGOs and education. Private, PE-owned."],
+  ["Citi / Standard Chartered","low","Dual-edged: their de-risking is the reason CAB exists, but they remain the upstream correspondents."],
+  ["Western Union","low","Partial — same emerging-market corridors; competes on the disbursement leg. Declining; ~6× EV/EBITDA."]
+];
 /* ============================================================ GLOSSARY / FOOTNOTES ============================================================ */
 const GLOSS={
   "EBITDA":"Earnings before interest, tax, depreciation and amortisation — operating profit before financing and accounting charges.",
@@ -688,6 +709,7 @@ function fnotes(keys){
 const FNOTES_FOR={
   overview:["EBITDA margin","Economic profit","Cost of capital","EV / EBITDA"],
   revenue:["Take rate","Net interest income","EBITDA"],
+  clients:["Net interest income","Take rate"],
   cost:["Operations","Correspondent & settlement","Financial-crime compliance","Cost-income ratio","Economic profit","Cost of capital"],
   market:["EV / EBITDA","EBITDA margin","Take rate"],
   strategy:["Economic profit","Nostro / trapped liquidity"]
@@ -1449,6 +1471,7 @@ const NAVGROUPS=[
   {sec:"", items:[
     ["overview","◎ Overview"],
     ["revenue","Revenue drivers"],
+    ["clients","Clients"],
     ["cost","Cost drivers"],
     ["market","Market & competitors"],
     ["strategy","Strategy & plan"]
@@ -1723,6 +1746,9 @@ VIEWS.market=function(m){
       ${hbars(TECH.filter(t=>t[4]).map(t=>({label:t[0].split(' ')[0],value:t[4],disp:'£'+t[4]+'m',color:kindColor[t[1]]})),{labelW:90,w:430,rowH:26})}
       <div class="flowtag" style="margin-top:6px">Stablecoins are the biggest — adopt as a rail or be bypassed. Visa Direct / PAPSS compete on consumer corridors. NGN concentration remains the single-corridor worry.</div></div>
   </div>
+  <div class="card" style="margin-bottom:14px"><div class="ch"><h3>COMPETITOR INTELLIGENCE — WHO WE'RE UP AGAINST</h3><span class="meta">overlap with CAB &amp; threat level</span></div>
+    <table><thead><tr><th class="l">Competitor</th><th class="l">Threat</th><th class="l">Overlap with CAB</th></tr></thead><tbody>${COMP_INTEL.map(c=>`<tr><td class="l" style="font-weight:600">${c[0]}</td><td><span class="tag ${c[1]==='high'?'neg':c[1]==='med'?'gold':'blue'}">${c[1]==='high'?'HIGH':c[1]==='med'?'MEDIUM':'LOW'}</span></td><td class="l" style="white-space:normal;font-size:10.5px;line-height:1.45">${c[2]}</td></tr>`).join('')}</tbody></table>
+  </div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card"><div class="ch"><h3>THE MOAT — OUR CORRESPONDENT NETWORK</h3><span class="meta">10 core correspondents, 390 local relationships</span></div>
       ${networkGraph()}
@@ -1763,6 +1789,41 @@ VIEWS.strategy=function(m){
     <div class="card"><div class="ch"><h3>MACRO SCENARIOS — GOOD &amp; BAD</h3><span class="meta">5-year shocks → ROE</span></div>
       ${hbars(scen.map(x=>({label:x.s[1].length>26?x.s[1].slice(0,24)+'…':x.s[1],value:x.roeD,disp:F.signbp(x.roeD*100),color:x.roeD>=0?'#37d39a':'#ff5d6c'})),{diverging:true,w:520,rowH:26,labelW:175})}
       <div class="flowtag" style="margin-top:6px">AI / compliance automation is the big upside; stablecoin disruption and a Nigeria devaluation are the big downside risks.</div></div>
+  </div>`;
+};
+
+VIEWS.clients=function(m){
+  const trendCol={up:'#37d39a',flat:'#9fb0c7',down:'#ff5d6c'}, trendLab={up:'growing',flat:'stable',down:'shrinking'};
+  const kpi=(lab,val,sub)=>`<div class="card"><div class="stat"><div class="lab">${lab}</div><div class="num" style="font-size:21px">${val}</div><div class="sub">${sub}</div></div></div>`;
+  const lines=[['Banks · +15%',71.9,'#3fa9ff'],['Fintechs & corporates · +15%',33.2,'#f5b942'],['Development orgs · −9%',13.9,'#ff5d6c']];
+  const changes=["Fintechs and MTOs become a bigger share as tighter emerging-market regulation pushes them onto licensed rails — the growth engine, but margin-compressing.","Development-organisation income keeps shrinking as USAID closes and FCDO cuts aid (0.5% to 0.3% of GNI).","Stablecoins and CBDCs cut both ways: a 2026 stablecoin off-ramp and 30+ central-bank ties could win crypto-rail clients, or disintermediate FX on some corridors.","Geography broadens beyond the UK and Africa via the new New York and Abu Dhabi offices (the Americas are already ~35% of flows).","Further de-concentration: more, smaller, higher-retention clients across more corridors (top-5 corridors 32%, down from a 49% peak)."];
+  return `
+  <div class="viewhead"><div><div class="kicker">Clients</div>
+    <h2>Who buys our services</h2>
+    <p>CAB serves <b>592 active clients</b> across six segments. The book is well diversified — <b>no single client is more than ~7% of income</b>, the top 100 clients retain at 96%, and average revenue per client is ~£201k. (Separately, ~390 local-bank relationships are the delivery network CAB pays into — rails, not paying clients.)</p></div></div>
+  <div class="grid4" style="margin-bottom:14px">
+    ${kpi('Active clients','592','+46 net new in FY25')}
+    ${kpi('Largest single client','&lt;7%','of income — diversified')}
+    ${kpi('Top-100 retention','96%','net revenue retention &gt;100%')}
+    ${kpi('Revenue per client','~£201k','from ~£193k')}
+  </div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>INCOME BY CLIENT TYPE — FY25</h3><span class="meta">three reported lines · £119m</span></div>
+      ${hbars(lines.map(l=>({label:l[0],value:l[1],disp:F.m(l[1]),color:l[2]})),{labelW:185,w:520,rowH:30})}
+      <div class="flowtag" style="margin-top:6px">Banks are the anchor (60%); fintechs &amp; corporates are the growth engine (+66% half-on-half in H2); development organisations are shrinking on aid cuts.</div>
+    </div>
+    <div class="card"><div class="ch"><h3>HOW THE CLIENT BASE COULD CHANGE</h3></div>
+      ${changes.map(x=>`<div class="fnote"><b class="gold">›</b> ${x}</div>`).join('')}
+    </div>
+  </div>
+  <div class="card"><div class="ch"><h3>THE SIX SEGMENTS — WHO, WHY, AND WHAT COULD CHANGE</h3></div>
+    ${CLIENT_SEGMENTS.map(s=>`<div style="padding:11px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12.5px">${s[0]}</b><span style="font-size:11px;font-family:var(--mono)">${s[1]}% of income · <span style="color:${trendCol[s[2]]}">${trendLab[s[2]]}</span></span></div>
+      <div class="flowtag" style="margin-top:5px;line-height:1.5"><b style="color:var(--ink)">Who</b> — ${s[3]}</div>
+      <div class="flowtag" style="margin-top:3px;line-height:1.5"><b style="color:var(--ink)">Examples</b> — ${s[4]}</div>
+      <div class="flowtag" style="margin-top:3px;line-height:1.5"><b style="color:var(--ink)">Why CAB</b> — ${s[5]}</div>
+      <div class="flowtag" style="margin-top:3px;line-height:1.5"><b style="color:var(--gold)">Could change</b> — ${s[6]}</div>
+    </div>`).join('')}
   </div>`;
 };
 
