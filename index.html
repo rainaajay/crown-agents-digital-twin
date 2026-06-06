@@ -67,6 +67,13 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .navitem.on{background:linear-gradient(90deg,rgba(245,185,66,.13),transparent);border-left-color:var(--gold);color:#fff;font-weight:600}
 .navitem .lv{font-family:var(--mono);font-size:9.5px;color:var(--ink3);width:18px}
 .navitem.on .lv{color:var(--gold)}
+.navtoggle{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.navtoggle:hover{color:var(--ink2)}
+.caret{font-size:9px;color:var(--ink3);letter-spacing:0}
+.rsec{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:3px 0}
+.rsec:hover .caret{color:var(--gold)}
+.ctxcard{border-left:3px solid var(--gold)!important}
+#crumb{font-size:11px;color:var(--ink2);font-family:var(--mono);white-space:nowrap;padding-right:4px}
 
 #main{flex:1;overflow-y:auto;padding:18px 20px 60px;min-width:0;position:relative}
 #right{flex:0 0 270px;background:#090d15;border-left:1px solid var(--line);overflow-y:auto;padding:14px 14px 40px}
@@ -174,6 +181,7 @@ tr.clk:hover td{background:#101a29}
       <div class="sub">Economic Digital Twin</div>
     </div>
   </div>
+  <div id="crumb">Cockpit</div>
   <div id="cmdwrap">
     <span class="ic">❯</span>
     <input id="cmd" placeholder="Ask the twin —  why did ROE move?  which corridors destroy value?  what if we exit sub-scale MTOs?" autocomplete="off">
@@ -212,7 +220,7 @@ const BASE = {
   // operating cost stack (cash opex, £m) — staff is the dominant driver for a people-heavy specialist bank
   staff:42, tech:14, compliance:11, network:8, premises:9,        // = £84m → adj. EBITDA £35m (29.4%)
   // below adj. EBITDA (£m)
-  amort:6, da:3, adjusting:6,    // amortisation of acquired intangibles (Segovia/EMP) + D&A + realignment items
+  amort:6, da:4.6, adjusting:6,  // intangible amort (Segovia/EMP) + depreciation — total D&A £10.6m (FY25) + realignment items
   // capital & balance sheet (£m) — FY24 audited anchors: CET1 £126.3m, ROE 10.81%, total assets £1,818m
   equity:150, tangEquity:120, cet1Cap:126.3, rwa:720, totalAssets:1818,
   fxVolBn:41.9, clients:592, currencies:120, pairs:800, countries:190,
@@ -220,9 +228,11 @@ const BASE = {
   baseMarginBps:11.7, rateSensitive:600, trappedM:118,
   // disclosed network scale
   centralBanks:30, localRels:390, humanitarianBn:13.5,
-  // listed parent: CAB Payments Holdings plc (LSE: CABP)
-  sharePence:80, shares:254, mktCap:203, ipoPence:335, ipoVal:851, ipoYear:2023,
-  consTarget:80, consLo:45, consHi:100, rating:"Buy", nAnalysts:6, pe:11.8,
+  // listed parent: CAB Payments Holdings plc (LSE: CABP) — as of Jun 2026
+  sharePence:82, shares:254, mktCap:208, ipoPence:335, ipoVal:851, ipoYear:2023,
+  consTarget:95, consLo:80, consHi:120, rating:"Buy", nAnalysts:6, pe:12,
+  // live takeover situation (2026): StoneX 95p→110p/£287m, board minded to recommend; Helios ~45% blocked it; StoneX withdrew
+  stoneXFirst:95, stoneXFinal:110, stoneXVal:287, heliosBid:85, heliosStake:45, asOf:"Jun 2026",
   rev23:137, rev24:106, ebitda23:64.6
 };
 
@@ -253,20 +263,21 @@ const HUBS = {
   "Freetown":[8.48,-13.23],"Port Moresby":[-9.44,147.18]
 };
 
+// Illustrative named relationships — the bank's real mix is Banks ~60% / fintech & corporates ~28% / development ~12% of revenue
 const CLIENTS = [
   // name, segment, rev, cost, cap, liqBn
-  ["Tier-1 Remittance Operator — Africa","MTO",11.2,5.8,7.0,0.9],
-  ["Pan-African Bank Group","Bank",5.5,3.4,4.5,0.7],
-  ["Tier-1 Remittance Operator — Asia","MTO",7.9,4.6,5.2,0.6],
-  ["Global Development Finance Agency","DFI",6.4,3.1,3.5,0.5],
-  ["West African Central Bank","Central Bank",4.1,1.6,2.0,0.8],
-  ["UN Humanitarian Agency","NGO",3.8,2.4,1.8,0.3],
-  ["Emerging FX Hedge Fund","Corporate",2.8,1.4,1.6,0.2],
-  ["UK Pension Administrator","Pension",2.6,1.3,1.0,0.2],
-  ["Frontier Commodities Trader","Corporate",3.2,2.0,2.6,0.3],
-  ["Caribbean Bank Network","Bank",2.1,1.9,2.2,0.2],
-  ["Legacy Government Payroll","Government",1.9,2.3,1.4,0.2],
-  ["Sub-scale MTO Cluster (38 names)","MTO",4.2,4.6,3.8,0.4]
+  ["Pan-African Bank Group","Bank",13.6,6.4,8.0,1.2],
+  ["Gulf Correspondent Bank","Bank",9.4,4.3,5.4,0.9],
+  ["West African Commercial Bank","Bank",6.8,3.6,4.2,0.7],
+  ["Tier-1 Remittance Operator — Africa","MTO",7.9,4.2,5.0,0.7],
+  ["Caribbean Bank Network","Bank",4.8,2.7,3.0,0.4],
+  ["Tier-1 Remittance Operator — Asia","MTO",5.1,3.0,3.4,0.5],
+  ["Global Development Finance Agency","DFI",4.4,2.2,2.4,0.4],
+  ["West African Central Bank","Central Bank",3.6,1.4,1.8,0.6],
+  ["Emerging FX Hedge Fund","Corporate",2.9,1.4,1.6,0.2],
+  ["UN Humanitarian Agency","NGO",2.6,1.7,1.3,0.3],
+  ["Legacy Government Payroll","Government",1.7,2.1,1.3,0.2],
+  ["Sub-scale MTO Cluster (38 names)","MTO",3.8,4.2,3.4,0.4]
 ];
 
 const CORRESPONDENTS = [
@@ -332,13 +343,13 @@ const SOLUTIONS = [
 // ---- Strategic outlook: macro of CAB's key markets ----
 const COUNTRIES = [
   // name, pop(m), gdpGrowth%, mobileMoney%, remitGrowth%, ccyVol(1-5 hi=worse), stability(1-5 hi=better), cabRevM, strategic(0-100)
-  ["Nigeria",223,3.0,45,8,5,2,14.8,78],
-  ["Kenya",55,5.0,80,10,3,4,10.6,90],
+  ["Nigeria",223,3.6,45,8,5,2,14.8,78],
+  ["Kenya",55,5.0,90,10,3,4,10.6,90],
   ["Ghana",34,4.2,62,7,4,3,8.4,74],
   ["Egypt",112,3.6,30,12,4,3,6.1,70],
   ["Tanzania",67,5.2,55,9,3,4,4.5,73],
   ["Uganda",48,5.5,52,8,3,3,3.6,68],
-  ["Ethiopia",126,6.2,25,6,5,2,3.1,65],
+  ["Ethiopia",126,7.8,25,6,5,2,3.1,65],
   ["Bangladesh",173,5.8,42,9,3,3,4.0,71],
   ["Pakistan",240,2.6,36,11,4,2,3.4,60]
 ];
@@ -355,16 +366,16 @@ const TECH = [
 // ---- External intelligence feed ----
 const NEWS = [
   // when, category, headline, impact(pos/neg/watch)
-  ["Today","Currency","CBN holds policy rate at 27.25%; naira steadies after FX reforms","pos"],
-  ["Today","Disruption","USDC settlement volumes into Africa up ~40% year-on-year","neg"],
-  ["1d","Development","World Bank approves $1.2bn Sahel resilience programme","pos"],
-  ["1d","Currency","Ghana cedi slips ~6% as IMF tranche timing slips","neg"],
-  ["2d","Regulation","UK FCA tightens APP-fraud reimbursement rules","watch"],
-  ["2d","Competitor","Wise posts +25% volume; sharpens emerging-market FX pricing","neg"],
-  ["3d","Infrastructure","Kenya & Ghana extend PAPSS real-time connectivity","watch"],
-  ["4d","Currency","Egypt floats the pound; EGP repriced sharply","watch"],
-  ["5d","Development","USAID restructuring puts some aid disbursements under review","neg"],
-  ["6d","Competitor","StoneX acquires an emerging-markets payments specialist","watch"]
+  ["Jun 2026","Corporate action","StoneX's raised 110p / £287m bid for CAB Payments lapses after Helios (~45%) declines to back it; the board had been minded to recommend","watch"],
+  ["Jun 2026","Currency","Central Bank of Nigeria holds policy rate at 26.5%; naira steadier after 2024 FX reforms","pos"],
+  ["1w","Disruption","Stablecoin (USDC/USDT) settlement volumes into Africa up ~60% year-on-year","neg"],
+  ["1w","Development","US aid restructuring — USAID effectively dismantled; flows to Africa down ~35% (touches ~12% of CAB revenue)","neg"],
+  ["2w","Currency","Ghana cedi slips ~6% as IMF tranche timing slips","neg"],
+  ["2w","Competitor","Wise posts +25% volume; sharpens emerging-market FX pricing","neg"],
+  ["3w","Infrastructure","Kenya & Ghana extend PAPSS real-time connectivity","watch"],
+  ["1m","Development","World Bank approves $1.2bn Sahel resilience programme","pos"],
+  ["1m","Regulation","UK FCA APP-fraud reimbursement rules raise control costs","watch"],
+  ["Q1","Competitor","Convera & StoneX expand EM payout reach; correspondent competition intensifies","watch"]
 ];
 // ---- Forward (board) scenarios ----
 const FSCEN = [
@@ -383,7 +394,7 @@ const OPS = {
 const RISK = {
   amlAlerts:142, amlOpen:23, sanctionsHits:6, kycBacklog:38,
   countries:[["DR Congo",4.8],["Nigeria",4.6],["Sierra Leone",4.4],["Pakistan",4.2],["Egypt",3.6],["Ghana",3.4],["Kenya",2.6]],
-  issues:[["NGN convertibility & repatriation risk","red"],["Concentration — top-3 corridors = 38% of revenue","amber"],["Correspondent de-risking in 2 West-Africa lanes","amber"],["New UK APP-fraud rules — control uplift required","amber"]]
+  issues:[["NGN convertibility & repatriation risk","red"],["Top-5 client/counterparty concentration ~48% — single-name risk","red"],["Corridor concentration — top-3 lanes ≈ 34% of revenue","amber"],["Correspondent de-risking in 2 West-Africa lanes","amber"],["New UK APP-fraud rules — control uplift required","amber"]]
 };
 
 /* ============================================================ STATE ============================================================ */
@@ -720,15 +731,14 @@ VIEWS.cockpit=function(m){
       <button class="btn gold sm" style="margin-top:12px" onclick="goAction()">→ Open Action Centre</button>
     </div>
     <div class="card">
-      <div class="ch"><h3>THE STREET vs THE ENGINE</h3><span class="tag gold">lens: ${valMode==='engine'?'INTRINSIC':'MARKET'}</span></div>
-      <div class="row" style="gap:10px">
-        <div class="stat" style="flex:1;padding:9px 11px;border-radius:8px;background:${valMode==='street'?'rgba(245,185,66,.13)':'transparent'};border:1px solid ${valMode==='street'?'var(--gold)':'var(--line2)'}">
-          <div class="lab">CABP market cap</div><div class="num" style="font-size:19px;color:${valMode==='street'?'var(--gold)':'var(--ink2)'}">${F.m0(m.ebitda*5.8)}</div><div class="sub">~5.8× EBITDA · 80p/share</div></div>
-        <div class="stat" style="flex:1;padding:9px 11px;border-radius:8px;background:${valMode==='engine'?'rgba(245,185,66,.13)':'transparent'};border:1px solid ${valMode==='engine'?'var(--gold)':'var(--line2)'}">
-          <div class="lab">Intrinsic · the engine</div><div class="num" style="font-size:19px;color:${valMode==='engine'?'var(--gold)':'var(--ink2)'}">${F.m0(m.ebitda*12)}</div><div class="sub">12× payments-peer multiple</div></div>
+      <div class="ch"><h3>WHAT THE BANK IS WORTH</h3><span class="tag gold">live · ${BASE.asOf}</span></div>
+      <div class="row" style="gap:8px">
+        <div class="stat" style="flex:1"><div class="lab">Street (CABP)</div><div class="num" style="font-size:17px">£${BASE.mktCap}m</div><div class="sub">~${BASE.sharePence}p</div></div>
+        <div class="stat" style="flex:1"><div class="lab">StoneX bid</div><div class="num gold" style="font-size:17px">£${BASE.stoneXVal}m</div><div class="sub">110p · blocked by Helios</div></div>
+        <div class="stat" style="flex:1"><div class="lab">Intrinsic</div><div class="num pos" style="font-size:17px">${F.m0(m.ebitda*12)}</div><div class="sub">12× EBITDA</div></div>
       </div>
-      <div class="note" style="margin-top:9px"><b class="gold">${F.m0(m.ebitda*12-m.ebitda*5.8)} re-rating gap.</b> The market prices the engine at ~5.8× EBITDA (£203m, down from £851m at IPO); specialist payments peers trade at 10–15×. Toggle the lens (top-right) to switch the headline everywhere. FY25 beat consensus on every line (income <span class="k">+£7.7m</span>).</div>
-      <button class="btn sm" style="margin-top:10px" onclick="setView('market')">→ Reconcile with the market</button>
+      <div class="note" style="margin-top:9px">An acquirer offered <b class="gold">£${BASE.stoneXVal}m</b> and the <b>${BASE.heliosStake}% owner held out for more</b> — yet a full payments-peer re-rating implies <b class="pos">${F.m0(m.ebitda*12)}</b>. Closing that gap is the mandate.</div>
+      <button class="btn sm" style="margin-top:10px" onclick="setView('market')">→ The bid, the street &amp; the engine</button>
     </div>
   </div>
 
@@ -786,17 +796,17 @@ VIEWS.market=function(m){
   return `
   <div class="viewhead">
     <div><div class="kicker">Market · How the world prices us</div>
-      <h2>The street price, against intrinsic value</h2>
-      <p>The bank trades as <b>CAB Payments Holdings (LSE: CABP)</b> — listed July 2023 at 335p (£851m), now ${B.sharePence}p (~£${B.mktCap}m) after the 2024 reset. This view sets <b>what the market pays</b> against <b>what the economic engine is worth</b>; the gap between them is the re-rating opportunity.</p>
+      <h2>The bid, the street and the engine</h2>
+      <p><b>CAB Payments Holdings (LSE: CABP)</b>: ~${B.sharePence}p, ~£${B.mktCap}m (from 335p/£851m at the 2023 IPO). In 2026 <b>StoneX bid 95p→110p (£${B.stoneXVal}m), the board was minded to recommend, and Helios (~${B.heliosStake}%) blocked it as too low</b> — so even the largest owner sees more than £${B.stoneXVal}m. This view sets the bid, the street price and the intrinsic engine value side by side. <span class="dim3">As of ${B.asOf}.</span></p>
     </div>
     <div style="text-align:right"><div class="scenbadge">lens</div><div class="mono gold" style="font-size:18px">${valMode==='engine'?'THE ENGINE':'THE STREET'}</div><div class="scenbadge">toggle top-right ↗</div></div>
   </div>
 
   <div class="grid4" style="margin-bottom:14px">
-    <div class="card">${sc('Share price (CABP)',B.sharePence+'p','London Stock Exchange · GBp')}</div>
-    <div class="card">${sc('Market capitalisation','£'+B.mktCap+'m','from £'+B.ipoVal+'m at IPO','var(--neg)')}</div>
-    <div class="card">${sc('Consensus target',B.consTarget+'p',B.nAnalysts+' analysts · range '+B.consLo+'–'+B.consHi+'p')}</div>
-    <div class="card">${sc('Consensus rating',B.rating,B.pe+'× P/E · 5.8× EV/EBITDA','var(--gold)')}</div>
+    <div class="card">${sc('Share price (CABP)',B.sharePence+'p','LSE · ~£'+B.mktCap+'m market cap')}</div>
+    <div class="card">${sc('StoneX final bid','110p','£'+B.stoneXVal+'m · board minded to recommend','var(--gold)')}</div>
+    <div class="card">${sc('Helios (largest owner)','Blocked',B.heliosStake+'% · 85p consortium · "too low"','var(--neg)')}</div>
+    <div class="card">${sc('Intrinsic · engine','£'+(m.ebitda*12).toFixed(0)+'m','12× adj. EBITDA · re-rating case','var(--pos)')}</div>
   </div>
 
   <div class="grid2" style="margin-bottom:14px">
@@ -829,27 +839,19 @@ VIEWS.market=function(m){
 };
 
 function valuationTree(m){
-  const W=560,H=250; const ebd=m.ebitda;
-  const street=ebd*5.8, engine=ebd*12, gap=engine-street;
+  const W=560,H=250, ebd=m.ebitda;
+  const street=BASE.mktCap, bid=BASE.stoneXVal, engine=ebd*12, max=engine*1.08;
+  const bar=(label,val,yy,col,sub)=>{const w=(W-160)*(val/max);return `
+    <text x="148" y="${yy+15}" text-anchor="end" style="fill:var(--ink);font-size:10.5px">${label}</text>
+    <rect x="156" y="${yy}" width="${Math.max(w,2)}" height="30" rx="5" fill="${col}" opacity="0.85"/>
+    <text x="${156+w+8}" y="${yy+14}" style="fill:#fff;font-family:var(--mono);font-size:13px">£${val.toFixed(0)}m</text>
+    <text x="${156+w+8}" y="${yy+27}" style="fill:var(--ink3);font-size:8.5px">${sub}</text>`;};
   return `<svg viewBox="0 0 ${W} ${H}" width="100%">
-    <rect x="16" y="102" width="120" height="46" rx="7" fill="#101a2b" stroke="#3fa9ff"/>
-    <text x="76" y="119" text-anchor="middle" style="fill:var(--ink2);font-size:9px">Adj. EBITDA</text>
-    <text x="76" y="138" text-anchor="middle" style="fill:#fff;font-family:var(--mono);font-size:15px">${F.m0(ebd)}</text>
-    <line class="wf-conn" x1="136" y1="125" x2="208" y2="91"/>
-    <line class="wf-conn" x1="136" y1="125" x2="208" y2="171"/>
-    <text x="170" y="96" text-anchor="middle" style="fill:var(--neg);font-size:9px;font-family:var(--mono)">×5.8 street</text>
-    <text x="170" y="186" text-anchor="middle" style="fill:var(--pos);font-size:9px;font-family:var(--mono)">×12 peers</text>
-    <rect x="208" y="69" width="162" height="46" rx="7" fill="#1a0f12" stroke="var(--neg)"/>
-    <text x="220" y="86" style="fill:var(--ink3);font-size:9px">Where the market is (CABP)</text>
-    <text x="220" y="105" style="fill:var(--neg);font-family:var(--mono);font-size:15px">${F.m0(street)}</text>
-    <rect x="208" y="147" width="162" height="46" rx="7" fill="#0f1a14" stroke="var(--pos)"/>
-    <text x="220" y="164" style="fill:var(--ink3);font-size:9px">Intrinsic · the engine</text>
-    <text x="220" y="183" style="fill:var(--pos);font-family:var(--mono);font-size:15px">${F.m0(engine)}</text>
-    <line x1="384" y1="92" x2="384" y2="170" stroke="var(--gold)" stroke-width="1" stroke-dasharray="3 3"/>
-    <rect x="398" y="107" width="150" height="44" rx="7" fill="#1a1304" stroke="var(--gold)"/>
-    <text x="408" y="124" style="fill:var(--ink2);font-size:9px">Re-rating gap</text>
-    <text x="408" y="143" style="fill:#f5b942;font-family:var(--mono);font-size:16px">${F.m0(gap)}</text>
-    <text x="280" y="223" text-anchor="middle" style="fill:var(--ink3);font-size:9px">IPO July 2023 at 335p = £851m. Move EBITDA on the levers and both values retrace in real time.</text>
+    ${bar('Street (CABP)',street,28,'#3fa9ff',(street/ebd).toFixed(1)+'× · ~'+BASE.sharePence+'p')}
+    ${bar('StoneX bid',bid,78,'#f5b942',(bid/ebd).toFixed(1)+'× · 110p — Helios called it too low')}
+    ${bar('Intrinsic · engine',engine,128,'#37d39a','12× · payments-peer re-rating')}
+    <text x="156" y="190" style="fill:var(--ink2);font-size:10px">An acquirer offered <tspan style="fill:#f5b942">£${bid}m</tspan>; the ${BASE.heliosStake}% owner held out for more; a full peer re-rating implies <tspan style="fill:#37d39a">£${engine.toFixed(0)}m</tspan>.</text>
+    <text x="156" y="208" style="fill:var(--ink3);font-size:9px">IPO Jul-2023: 335p = £851m. Move EBITDA on the levers and the bars retrace live.</text>
   </svg>`;
 }
 
@@ -980,8 +982,8 @@ VIEWS.cost=function(m){
       <div style="flex:1">${opx.map(c=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${c.color};margin-right:7px"></span>${c.label}</span><b class="mono">${F.m(c.value)}</b></div>`).join('')}</div></div></div>
   </div>
   <div class="grid2" style="margin-bottom:14px">
-    <div class="card"><div class="ch"><h3>ADJUSTED EBITDA → NET PROFIT</h3><span class="tag ${m.netProfit>0?'pos':'neg'}">${F.m0(m.netProfit)}</span></div>${waterfall(below,{h:230})}
-      <div class="flowtag" style="margin-top:6px">Below EBITDA: amortisation of acquired intangibles (Segovia / EMpower), depreciation, and adjusting/realignment items bridge to statutory net profit.</div></div>
+    <div class="card"><div class="ch"><h3>ADJ. EBITDA → ADJUSTED NET PROFIT</h3><span class="tag ${m.netProfit>0?'pos':'neg'}">${F.m0(m.netProfit)}</span></div>${waterfall(below,{h:230})}
+      <div class="flowtag" style="margin-top:6px">Intangible amortisation (Segovia / EMpower) + depreciation (£10.6m total D&amp;A) + adjusting/realignment items. <b>This is the adjusted bridge — statutory EPS was lower at ~5.4p</b> (vs 6.8p adjusted) on FY25 transformation costs.</div></div>
     <div class="card"><div class="ch"><h3>FINANCIAL-CRIME COST BY CORRIDOR RISK</h3></div>
       ${heatmap(["KYC onboarding","AML monitoring","Sanctions","Investigations"],["NGN","GHS","CDF","SLE","KES","ZAR"],
         [[1.4,0.9,0.7,0.5,0.6,0.4],[1.8,1.1,0.9,0.6,0.7,0.4],[1.1,0.8,1.0,0.7,0.4,0.3],[1.2,0.7,1.1,0.8,0.3,0.2]],{cw:54,lw:108,fmt:v=>'£'+v.toFixed(1)})}
@@ -1024,6 +1026,7 @@ VIEWS.corridor=function(m){
   </div>
   <div class="card"><div class="ch"><h3>CORRIDOR LEAGUE TABLE</h3><span class="meta">sorted by economic profit · click to inspect</span></div>
     <table><thead><tr><th class="l">Corridor</th><th>Flow</th><th>Revenue</th><th>Margin</th><th>Settle</th><th>Fail</th><th>Economic Profit</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="flowtag" style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px">These 16 named lanes are ~50% of FX &amp; payments flow; the rest is a long tail. <b>Corridors and clients are two cuts of the same £119m income — not additive to each other.</b></div>
   </div>`;
 };
 
@@ -1051,6 +1054,7 @@ VIEWS.client=function(m){
   </div>
   <div class="card"><div class="ch"><h3>RELATIONSHIP PROFITABILITY</h3><span class="meta">economic profit = revenue − all-in cost − capital charge</span></div>
     <table><thead><tr><th class="l">Client</th><th class="l">Segment</th><th>Revenue</th><th>Cost</th><th>Capital</th><th>Liquidity</th><th>Economic Profit</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="flowtag" style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px">Illustrative named relationships; the real mix is ≈ <b>Banks 60% · fintech &amp; corporates 28% · development 12%</b>, with 580+ smaller names in the tail. <b>This is the relationship cut of the same £119m — not additive to the corridor view.</b></div>
   </div>`;
 };
 
@@ -1099,6 +1103,12 @@ VIEWS.liquidity=function(m){
     <h2>Liquidity as a cost — and a business</h2>
     <p><b>${F.m0(totBal)}</b> across 12 nostro currencies, with two sides. Providing liquidity and treasury services to <b>30+ central banks</b> and financial institutions earns the <b>${F.m(BASE.nii)}</b> net-interest / banking line; meanwhile <b style="color:#ff5d6c">${F.m0(totTrap)} sits trapped</b> (capital controls, settlement buffers, minimum balances). Redeploying the trapped side into earning assets lifts income — pull the liquidity lever.</p></div>
     <div style="text-align:right"><div class="scenbadge">released this scenario</div><div class="mono pos" style="font-size:20px">${F.m0(released)}</div></div></div>
+  <div class="grid4" style="margin-bottom:14px">
+    <div class="card"><div class="stat"><div class="lab">LCR</div><div class="num pos" style="font-size:20px">${BASE.lcr}%</div><div class="sub">vs 100% min · strong headroom</div></div></div>
+    <div class="card"><div class="stat"><div class="lab">NSFR</div><div class="num pos" style="font-size:20px">${BASE.nsfr}%</div><div class="sub">vs 100% minimum</div></div></div>
+    <div class="card"><div class="stat"><div class="lab">CET1 ratio</div><div class="num" style="font-size:20px">${BASE.cet1Pct}%</div><div class="sub">£${BASE.cet1Cap}m capital</div></div></div>
+    <div class="card"><div class="stat"><div class="lab">Total nostro</div><div class="num" style="font-size:20px">£${NOSTRO.reduce((a,n)=>a+n[1],0)}m</div><div class="sub">12 currencies · part HQLA, part settlement</div></div></div>
+  </div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card"><div class="ch"><h3>CURRENCY EXPOSURE MAP</h3></div>
       ${donut(NOSTRO.map((n,i)=>({label:n[0],value:n[1],color:`hsl(${(i*31)%360},60%,55%)`})),{sz:170,center:F.m0(totBal),sub:'nostro balances'})}
@@ -1133,7 +1143,7 @@ VIEWS.ep=function(m){
   <div class="viewhead"><div><div class="kicker">The economic engine · Economic profit</div>
     <h2>One formula, applied to everything</h2>
     <p class="mono" style="color:#f5b942">EP = Revenue − Correspondent − Liquidity − Compliance − Operations − Capital×CoE</p>
-    <p>The same calculation runs on every transaction, then aggregates by client, corridor, currency, country and correspondent. Group economic profit this scenario: <b style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b>.</p></div></div>
+    <p>The same calculation runs on every transaction, then aggregates by client, corridor, currency, country and correspondent. Group economic profit this scenario: <b style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b> — ROE <b>${F.pct(m.roe)}</b> against a cost of equity of <b>${F.pct0(COE)}</b> (risk-free ~4% + β·ERP + frontier/illiquidity premium). The bank earns <b>roughly its cost of capital</b>; the dispersion below is where value is actually made and lost.</p></div></div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card hero"><div class="ch"><h3>EP BUILD-UP — ${cc[0]}→${cc[1]} (${cc[2]})</h3><span class="meta">pick a corridor on the map to change</span></div>${waterfall(build,{h:240})}</div>
     <div class="card"><div class="ch"><h3>ECONOMIC PROFIT BY CURRENCY</h3></div>
@@ -1335,7 +1345,13 @@ VIEWS.risk=function(m){
     ${kpi('AML alerts / 24h',String(RISK.amlAlerts),RISK.amlOpen+' open investigations',RISK.amlOpen>20?'var(--warn)':'var(--ink)')}
     ${kpi('Sanctions hits',String(RISK.sanctionsHits),'pending review',RISK.sanctionsHits>3?'var(--warn)':'var(--ink)')}
     ${kpi('KYC backlog',RISK.kycBacklog+' cases','onboarding & refresh')}
-    ${kpi('Concentration','38%','top-3 corridors of revenue','var(--warn)')}
+    ${kpi('Corridor concentration','34%','top-3 lanes of revenue','var(--warn)')}
+  </div>
+  <div class="grid4" style="margin-bottom:14px">
+    ${kpi('CET1 ratio',BASE.cet1Pct+'%','£'+BASE.cet1Cap+'m capital · well capitalised','var(--pos)')}
+    ${kpi('Risk-weighted assets','£'+BASE.rwa+'m','on £'+BASE.totalAssets.toLocaleString()+'m assets')}
+    ${kpi('Top-5 client concentration','~48%','single-name / counterparty risk','var(--warn)')}
+    ${kpi('LCR / NSFR',BASE.lcr+' / '+BASE.nsfr,'liquidity coverage strong','var(--pos)')}
   </div>
   <div class="grid2">
     <div class="card"><div class="ch"><h3>COUNTRY RISK</h3><span class="meta">composite · 5 = highest</span></div>
@@ -1387,34 +1403,63 @@ const RIGHTCTX={
   fscenario:["Scenario engine","Run a board-level shock through the bank.",""],
   action:["Action centre","Tick a move — the whole bank re-prices.",""]
 };
+const ANALYTICAL=new Set(['cockpit','market','revenue','cost','ep','corridor','liquidity','fscenario']);
+let leversOpen=null;
+function toggleLevers(){ const cur=(leversOpen===null)?ANALYTICAL.has(activeView):leversOpen; leversOpen=!cur; renderRight(); }
+function rightStats(v,m){
+  const S={
+    cockpit:[['ROE',F.pct(m.roe)],['Economic profit',F.signm(m.ep)]],
+    market:[['Share price',BASE.sharePence+'p'],['StoneX bid','£'+BASE.stoneXVal+'m']],
+    revenue:[['Total income',F.m0(m.income)],['FX share',F.pct0(m.fx/m.income)]],
+    cost:[['Cost / income',F.pct(m.cir)],['Staff cost',F.m0(m.staff)]],
+    ep:[['ROE',F.pct(m.roe)],['Cost of equity',F.pct0(COE)]],
+    corridor:[['Value-destroying lanes',String(m.corr.filter(c=>c.ep<0).length)],['Annual flow',F.bn(BASE.fxVolBn*m.vf)]],
+    client:[['Active clients','592'],['Negative-EP shown',String(m.clients.filter(c=>c.ep<0).length)]],
+    liquidity:[['Trapped liquidity','£118m'],['LCR / NSFR',BASE.lcr+' / '+BASE.nsfr]],
+    network:[['Core correspondents','10'],['Of relationships','390']],
+    ops:[['Failed payments',OPS.failedPct+'%'],['Incidents (24h)',String(OPS.incidents)]],
+    risk:[['AML open',String(RISK.amlOpen)],['CET1 ratio',BASE.cet1Pct+'%']],
+    strategic:[['Top market','Kenya (90)'],['Markets shown','9']],
+    tech:[['Revenue at risk','£'+TECH.reduce((a,t)=>a+(t[4]||0),0)+'m'],['Biggest threat','Stablecoins']],
+    news:[['Headwinds',String(NEWS.filter(n=>n[3]==='neg').length)],['Top signal','Takeover lapsed']],
+    enterprise:[['Total income',F.m0(m.income)],['Value-chain stages','7']],
+    action:[['Moves applied',String(Object.keys(applied).length)],['EP vs base',F.signm(m.ep-baseSnapshot().ep)]],
+    fscenario:[['Scenario',selectedScenario?FSCEN.find(x=>x[0]===selectedScenario)[1].slice(0,20):'none selected']]
+  };
+  return (S[v]||[]).filter(x=>x&&x[0]).map(st=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:2.5px 0"><span class="dim">${st[0]}</span><b class="mono">${st[1]}</b></div>`).join('');
+}
 function renderRight(){
   const s=scenario;
   const ctx=RIGHTCTX[activeView]||RIGHTCTX.cockpit;
+  const m=compute();
+  const open=(leversOpen===null)?ANALYTICAL.has(activeView):leversOpen;
   const lever=(id,label,unit,min,max,step,val,fmt)=>`
     <div class="lever"><div class="lh"><span>${label}</span><span class="lv" id="lv-${id}">${fmt(val)}</span></div>
     <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="setLever('${id}',this.value)">
     <div class="lr"><span>${fmt(min)}</span><span>${fmt(max)}</span></div></div>`;
   document.getElementById("right").innerHTML=`
-    <div style="margin-bottom:13px;padding:10px 11px;background:#0c1422;border:1px solid var(--line2);border-radius:9px">
-      <div class="kicker" style="margin:0 0 4px">On this view</div>
-      <div style="font-size:12.5px;font-weight:700;color:#fff">${ctx[0]}</div>
-      <div class="flowtag" style="font-size:10.5px;margin-top:3px;line-height:1.4">${ctx[1]}</div>
-      ${ctx[2]?`<div class="flowtag" style="margin-top:6px">Key lever → <b class="gold">${ctx[2]}</b></div>`:''}
+    <div class="ctxcard" style="margin-bottom:12px;padding:11px 12px;background:#0c1422;border:1px solid var(--line2);border-radius:9px">
+      <div class="kicker" style="margin:0 0 5px">On this view</div>
+      <div style="font-size:13px;font-weight:700;color:#fff">${ctx[0]}</div>
+      <div class="flowtag" style="font-size:10.5px;margin:4px 0 8px;line-height:1.45">${ctx[1]}</div>
+      ${rightStats(activeView,m)}
+      ${ctx[2]?`<div class="flowtag" style="margin-top:7px;border-top:1px solid var(--line);padding-top:6px">Key lever → <b class="gold">${ctx[2]}</b></div>`:''}
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-      <div class="kicker" style="margin:0">Global scenario controls</div>
-      <span class="btn sm" onclick="resetScenario()">reset</span></div>
-    <div class="flowtag" style="margin-bottom:14px">These levers apply bank-wide, on every view.</div>
-    ${lever('fxMarginBps','FX margin','bps',7,15,0.1,s.fxMarginBps,v=>(+v).toFixed(1)+'bps')}
+    <div class="rsec" onclick="toggleLevers()" style="margin-bottom:${open?'8px':'0'}">
+      <span class="kicker" style="margin:0">⚙ Global scenario controls</span>
+      <span class="caret">${open?'▾ hide':'▸ show'}</span></div>
+    ${open?`
+    <div class="flowtag" style="margin:4px 0 12px">Apply bank-wide, on every view. <span class="btn sm" onclick="event.stopPropagation();resetScenario()">reset</span></div>
+    ${lever('fxMarginBps','FX margin','bps',7,16,0.1,s.fxMarginBps,v=>(+v).toFixed(1)+'bps')}
     ${lever('volumeGrowthPct','Volume growth','%',-10,30,1,s.volumeGrowthPct,v=>(v>=0?'+':'')+v+'%')}
     ${lever('rateShiftBps','Rate environment','bps',-200,200,10,s.rateShiftBps,v=>(v>=0?'+':'')+v+'bps')}
     ${lever('complianceAutomationPct','Compliance automation','%',0,80,5,s.complianceAutomationPct,v=>v+'%')}
     ${lever('liquidityReleasePct','Release trapped liquidity','%',0,100,5,s.liquidityReleasePct,v=>v+'%')}
     <div class="divider"></div>
-    <div class="kicker" style="margin-bottom:8px">Executive Actions</div>
+    <div class="kicker" style="margin-bottom:8px">Executive actions</div>
     <div id="rightactions">${ACTIONS.map(a=>`<div class="actrow" onclick="toggleAction('${a[0]}')">
       <div class="chk ${applied[a[0]]?'on':''}">${applied[a[0]]?'✓':''}</div>
-      <div class="at"><div class="t">${a[1]}</div><div class="d">${a[3]?F.signm(a[3])+' rev · ':''}${a[4]?F.signm(-a[4])+' cost':''}</div></div></div>`).join('')}</div>
+      <div class="at"><div class="t">${a[1]}</div><div class="d">${a[3]?F.signm(a[3])+' rev · ':''}${a[4]?F.signm(-a[4])+' cost':''}</div></div></div>`).join('')}</div>`:''}
     <div class="divider"></div>
     <button class="btn gold" style="width:100%" onclick="openConsole('summary')">◆ Ask the Twin for a read-out</button>
     <button class="btn" style="width:100%;margin-top:8px" onclick="openConsole('method')">ⓘ Sources &amp; portability</button>`;
@@ -1430,11 +1475,19 @@ const NAVGROUPS=[
   {sec:"The outside world", items:[["tech","Technology & disruption"],["news","News & intelligence"]]},
   {sec:"Decisions", items:[["action","Action centre"],["fscenario","Scenario engine"]]}
 ];
+let navOpen=null;
+function activeGroupSec(){ for(const g of NAVGROUPS){ if(g.items.some(it=>it[0]===activeView)) return g.sec; } return ''; }
+function toggleNavGroup(sec){ if(navOpen&&navOpen.has(sec)){navOpen=new Set();}else{navOpen=new Set([sec]);} renderNav(); }
 function renderNav(){
-  document.getElementById("nav").innerHTML = NAVGROUPS.map(g=>
-    (g.sec?`<div class="navsec">${g.sec}</div>`:`<div style="height:8px"></div>`)+
-    g.items.map(it=>`<div class="navitem ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')"><span>${it[1]}</span></div>`).join("")
-  ).join("");
+  const item=it=>`<div class="navitem ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')"><span>${it[1]}</span></div>`;
+  document.getElementById("nav").innerHTML = NAVGROUPS.map(g=>{
+    if(!g.sec) return item(g.items[0]);
+    const open=(g.sec===activeGroupSec())||(navOpen&&navOpen.has(g.sec));
+    return `<div class="navsec navtoggle" onclick="toggleNavGroup('${g.sec.replace(/'/g,"\\'")}')"><span>${g.sec}</span><span class="caret">${open?'▾':'▸'}</span></div>`+(open?g.items.map(item).join(""):"");
+  }).join("");
+  const cg=NAVGROUPS.find(g=>g.items.some(it=>it[0]===activeView));
+  const lab=cg?cg.items.find(it=>it[0]===activeView)[1].replace('◎ ',''):'';
+  const cr=document.getElementById('crumb'); if(cr) cr.textContent=(cg&&cg.sec?cg.sec+' · ':'')+lab;
 }
 
 /* ============================================================ ASK THE TWIN ============================================================ */
@@ -1518,7 +1571,7 @@ function genNote(){
     <div class="note" style="font-size:11.5px;line-height:1.65">
       <b>Investment case.</b> A specialist emerging-markets payments and FX franchise with near-200-year heritage and a network few can replicate — 120 currencies, 800 pairs, 190 countries, and 30+ central-bank and 390 local-bank relationships. After a difficult 2024 reset, FY25 delivered <b>income of £119m (+12%)</b>, <b>adjusted EBITDA of £35m (29.8% margin)</b> and <b>adjusted EPS of 6.8p</b> — <b>ahead of consensus on every line</b>. Wholesale and payment-FX volumes reached <b>£41.9bn (+13%)</b>.<br><br>
       <b>What the market is missing.</b> CABP trades at <b>~5.8× EBITDA (£${BASE.mktCap}m)</b> — a distressed multiple set by the 2023 profit warning — while specialist payments peers carry 10–20×. On a 12× peer multiple the franchise supports <b>${F.m0(m.ebitda*12)}</b> (≈${Math.round((m.ebitda*12)/BASE.shares*100)}p/share). The recovery is in the numbers; it is not yet in the rating.<br><br>
-      <b>Economic profit.</b> Group ROE of <b>${F.pct(m.roe)}</b> sits just above an estimated <b>${F.pct0(COE)}</b> cost of equity — economic profit of <b>${F.m(m.ep)}</b>, but with wide dispersion. A long tail of frontier corridors (secondary NGN, GHS, CDF, SLE) and sub-scale MTOs runs <b>negative EP</b>, masking the strength of the core.<br><br>
+      <b>Economic profit.</b> Group ROE of <b>${F.pct(m.roe)}</b> sits around an estimated <b>${F.pct0(COE)}</b> cost of equity — economic profit of roughly <b>${F.m(m.ep)}</b>, with wide dispersion. A long tail of frontier corridors (secondary NGN, GHS, CDF, SLE) and sub-scale MTOs runs <b>negative EP</b>, masking the strength of the core.<br><br>
       <b>Catalysts.</b> (i) repricing the value-destroying tail; (ii) automating financial-crime operations (−£4.4m cost); (iii) redeploying ~£118m of trapped nostro liquidity; (iv) anchoring new development-finance mandates. Execution lifts ROE toward <b>~${F.pct(b.roe+0.038)}</b> and supports a re-rating.<br><br>
       <b>Risks.</b> Frontier-currency convertibility (NGN/GHS), correspondent de-risking, sanctions exposure on high-risk corridors, and net-interest sensitivity to the rate cycle.
     </div>
@@ -1549,7 +1602,7 @@ function updateLeverLabel(id){ const el=document.getElementById('lv-'+id); if(!e
 function resetScenario(){ scenario={fxMarginBps:11.7,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); renderRight(); }
 function toggleAction(id){ applied[id]=!applied[id]; if(!applied[id]) delete applied[id]; refresh(); renderRight(); }
 function selectCorridor(i){ selectedCorridor=i; refresh(); }
-function setView(v){ activeView=v; renderNav(); renderRight(); refresh(); document.getElementById('main').scrollTop=0; }
+function setView(v){ activeView=v; leversOpen=null; renderNav(); renderRight(); refresh(); document.getElementById('main').scrollTop=0; }
 function goAction(){ setView('action'); }
 function genNoteWrap(){}
 function refresh(){
