@@ -1616,6 +1616,11 @@ VIEWS.revenue=function(m){
     <h2>Where the money comes from</h2>
     <p>FY25 income rose 12% to <b>£119m</b>. The engine is wholesale FX — a margin earned on <b>£41.9bn</b> of volume (up 13%). Income grows when volume rises, the mix shifts to higher-margin currencies, and the margin holds.</p></div>
     <div style="text-align:right"><div class="scenbadge">FX take rate</div><div class="mono gold" style="font-size:22px">0.15%</div><div class="scenbadge">up from 0.14%</div></div></div>
+  <div class="card hero" style="margin-bottom:14px">
+    <div class="ch"><h3>GLOBAL FLOW — WHERE MONEY MOVES, AND WHERE IT PAYS</h3><span class="meta">${m.corr.length} corridors · £41.9bn a year · green creates economic profit, red destroys it · click a lane</span></div>
+    ${corridorMap(m.corr)}
+    <div class="legend"><span><span class="sw" style="background:#37d39a"></span>value-creating lane</span><span><span class="sw" style="background:#ff5d6c"></span>value-destroying lane</span><span><span class="sw" style="background:#f5b942"></span>London hub</span><span><span class="sw" style="background:#3fa9ff"></span>local market</span></div>
+  </div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card"><div class="ch"><h3>WHERE REVENUE COMES FROM</h3><div style="display:flex;gap:5px">${lensBtn('product','By line')}${lensBtn('corridor','By corridor')}${lensBtn('client','By client')}</div></div>
       ${hbars(rows.map(r=>({label:r.label,value:r.value,disp:F.m(r.value),color:r.color})),{labelW:revLens==='product'?150:155,w:520})}
@@ -1655,6 +1660,20 @@ VIEWS.cost=function(m){
       ${hbars([{label:'CAB Payments',value:79,disp:'79%',color:'#ff5d6c'},{label:'Scalable peers',value:62,disp:'62%',color:'#37d39a'},{label:'Target',value:60,disp:'60%',color:'#f5b942'}],{labelW:120,w:460,rowH:32})}
       <div class="flowtag" style="margin-top:8px">Every point off the cost-income ratio drops ~£1.2m to profit. Closing to peer levels is the single biggest self-help lever on ROE.</div></div>
   </div>
+  <div class="card hero" style="margin-bottom:14px">
+    <div class="ch"><h3>WHERE THE £${m.income.toFixed(0)}m GOES — INCOME TO ECONOMIC PROFIT</h3><span class="meta">every pound is kept as profit or consumed by a cost or the cost of capital</span></div>
+    ${waterfall([
+      {label:'Income',value:m.income,type:'start'},
+      {label:'Correspondent',value:-m.network,type:'delta'},
+      {label:'Compliance',value:-m.compliance,type:'delta'},
+      {label:'Operations',value:-(m.staff+m.tech+m.premises),type:'delta'},
+      {label:'D&A',value:-(m.da+m.amort),type:'delta'},
+      {label:'Tax + adj.',value:-(m.adjusting+m.tax),type:'delta'},
+      {label:'Capital charge',value:-m.capitalCharge,type:'delta'},
+      {label:'Economic profit',value:m.ep,type:'end'}
+    ],{h:240})}
+    <div class="flowtag" style="margin-top:6px">The biggest consumers are operations (people and technology) and the network behind the franchise. After the cost of the capital employed (${F.pct0(COE)} × £${m.equity.toFixed(0)}m), economic profit is <b style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b> — roughly breakeven. Lowering cost-income is what turns this firmly positive.</div>
+  </div>
   <div class="card"><div class="ch"><h3>LEVERS — WHAT MOVES COST</h3><span class="meta">short term &amp; long term</span></div>
     <div class="grid2">
       <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Automate KYC, AML and sanctions screening — perpetual KYC and machine-led triage cut financial-crime cost by around a third, with no revenue at risk. Optimise correspondent routing to reduce fees and failed-payment repair.</div></div>
@@ -1677,6 +1696,11 @@ VIEWS.market=function(m){
     <div class="card"><div class="ch"><h3>THREATS TO THE MOAT</h3><span class="meta">revenue at risk over 5y</span></div>
       ${hbars(TECH.filter(t=>t[4]).map(t=>({label:t[0].split(' ')[0],value:t[4],disp:'£'+t[4]+'m',color:kindColor[t[1]]})),{labelW:90,w:430,rowH:26})}
       <div class="flowtag" style="margin-top:6px">Stablecoins are the biggest — adopt as a rail or be bypassed. Visa Direct / PAPSS compete on consumer corridors. NGN concentration remains the single-corridor worry.</div></div>
+  </div>
+  <div class="card" style="margin-bottom:14px"><div class="ch"><h3>THE MOAT — OUR CORRESPONDENT NETWORK</h3><span class="meta">CAB at the hub of 10 core correspondents and 390 local relationships</span></div>
+    ${networkGraph()}
+    <div class="legend"><span><span class="sw" style="background:#37d39a"></span>&gt;99% reliable</span><span><span class="sw" style="background:#ffb13d"></span>97–99%</span><span><span class="sw" style="background:#ff5d6c"></span>&lt;97%</span></div>
+    <div class="flowtag" style="margin-top:6px">Licences, central-bank lines and local-bank relationships in markets others have left — the access a competitor cannot quickly replicate. It is why clients pay, and it widens as rivals de-risk.</div>
   </div>
   <div class="card"><div class="ch"><h3>WHAT HAPPENED — INTELLIGENCE FEED</h3></div>
     ${NEWS.slice(0,7).map(n=>`<div style="display:flex;gap:11px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="flex:0 0 8px;height:8px;border-radius:50%;background:${dot[n[3]]};margin-top:4px"></span><div style="flex:1"><div style="font-size:12px;color:#fff">${n[2]}</div><div class="flowtag" style="margin-top:2px"><span class="pill">${n[1]}</span> <span class="dim3">${n[0]}</span></div></div><span class="tag ${n[3]==='pos'?'pos':n[3]==='neg'?'neg':'gold'}">${n[3]==='pos'?'tailwind':n[3]==='neg'?'headwind':'watch'}</span></div>`).join('')}
