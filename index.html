@@ -319,6 +319,16 @@ const ACTIONS = [
   ["anchordfi","Onboard 2 anchor DFI mandates","High-margin, low-capital development flows",5.0,2.4,3.0,"revenue"]
 ];
 
+// Six deployable solution modules (the build programme) — each closes a named value leak
+const SOLUTIONS = [
+  ["Corridor Profitability Engine","wrong corridor mix","Allocate liquidity, capital, compliance & ops cost to every lane; reprice or reshape the value-destroying tail.",2.4,1.4],
+  ["Dynamic Spread Optimisation","FX under-pricing","Price the FX spread by client elasticity, volatility and corridor demand — airline-style yield management.",2.1,1.3],
+  ["AI Liquidity Forecaster","idle / trapped nostro","Forecast currency, intraday and seasonal demand; release trapped balances into earning assets.",1.4,0.5],
+  ["Compliance Intelligence Platform","financial-crime drag","Perpetual KYC + ML triage across sanctions, AML and adverse media; cut false positives and investigation cost.",4.4,1.4],
+  ["Payments Route Optimiser","correspondent inefficiency","Least-cost, fastest, lowest-risk routing across the correspondent network in real time — a map for money.",0.9,0.3],
+  ["Relationship Manager Cockpit","loss-making clients","True client economic profit, capital and compliance burden; exit or reprice the tail, grow the core.",0.8,0.3]
+];
+
 /* ============================================================ STATE ============================================================ */
 let scenario = {fxMarginBps:11.2, volumeGrowthPct:0, rateShiftBps:0, complianceAutomationPct:0, liquidityReleasePct:0};
 let applied = {};   // action id -> true
@@ -1098,6 +1108,17 @@ VIEWS.action=function(m){
       ${hbars(ACTIONS.map(a=>{const one=compute(scenario,{[a[0]]:true});return {label:a[1].length>24?a[1].slice(0,22)+'…':a[1],value:one.ep-b.ep,disp:F.signm(one.ep-b.ep)};}).sort((x,y)=>y.value-x.value),{diverging:true,w:520,rowH:26,labelW:165})}
       <div class="flowtag" style="margin-top:6px">Standalone economic-profit impact of each move (before interactions).</div>
     </div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="ch"><h3>◆ SOLUTION MODULES — THE BUILD PROGRAMME</h3><span class="meta">each closes a named value leak · sized to annual EBITDA impact</span></div>
+    <div class="grid3">
+      ${SOLUTIONS.map(s=>`<div style="padding:11px 12px;background:#0a121e;border:1px solid var(--line2);border-radius:9px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12px">${s[0]}</b><span class="mono pos" style="font-size:12px">+${F.m(s[3])}</span></div>
+        <div class="tag neg" style="margin:6px 0">closes: ${s[1]}</div>
+        <div class="flowtag" style="font-size:10px;line-height:1.5">${s[2]}</div>
+        <div class="flowtag" style="margin-top:6px">ROE impact <b class="pos">+${s[4].toFixed(1)}pp</b></div>
+      </div>`).join('')}
+    </div>
+    <div class="flowtag" style="margin-top:10px">Combined gross opportunity <b class="pos">+${F.m(SOLUTIONS.reduce((a,s)=>a+s[3],0))}</b> EBITDA / <b class="pos">~+${SOLUTIONS.reduce((a,s)=>a+s[4],0).toFixed(1)}pp</b> ROE before overlaps — each is a deployable module running on the same economic engine.</div>
   </div>`;
 };
 
@@ -1197,6 +1218,8 @@ function answer(qraw){
   } else if(has("currency","ccy","fx pair")){
     const byCcy={};m.corr.forEach(o=>byCcy[o.c[2]]=(byCcy[o.c[2]]||0)+o.ep);const arr=Object.entries(byCcy).sort((a,b)=>b[1]-a[1]);
     html=`Best currencies by economic profit: ${arr.slice(0,3).map(e=>`<b>${e[0]}</b> <span class="k">${F.signm(e[1])}</span>`).join(', ')}. Worst: ${arr.slice(-3).map(e=>`<b>${e[0]}</b> <span class="k">${F.signm(e[1])}</span>`).join(', ')}. NGN and KES are the economic engines; CDF, SLE and ZMW are the drains.`;
+  } else if(has("build","solution","product","opportunit","what should we","value leak","modules")){
+    html=`Six deployable modules run on this engine, each closing a named value leak: ${SOLUTIONS.map(s=>`<b>${s[0]}</b> <span class="k">+${F.m(s[3])}</span>`).join(', ')}. Combined gross opportunity <b class="k">+${F.m(SOLUTIONS.reduce((a,s)=>a+s[3],0))}</b> EBITDA / ~+${SOLUTIONS.reduce((a,s)=>a+s[4],0).toFixed(1)}pp ROE before overlaps. The Action Centre lays them out as a build programme.`;
   } else if(has("source","provenance","real vs","made up","made-up","method","portab","modular","framework","nationwide","other bank","chief of staff")){
     html=methodReadout();
   } else if(has("summary","read-out","readout","overview","brief","how are we","state")){
@@ -1214,7 +1237,7 @@ function methodReadout(){ return `<b>What's real, what's modelled, what's illust
 <b class="k" style="color:#3fa9ff">● Derived</b> — ROE, cost of equity, economic profit, cost-income, capital & liquidity ratios and valuation multiples: modelled from the public figures and listed-peer ratios.<br><br>
 <b class="k" style="color:#ffb13d">● Illustrative</b> — the corridor / client / correspondent / nostro line items are realistic <b>placeholders</b> shaped to CAB's known footprint (frontier African corridors, MTO/DFI/central-bank clients, Citi/StanChart/Ecobank correspondents). Trade-finance and per-transaction detail aren't public — these are plausible stand-ins. <b>Swap in the bank's own ledgers and every number becomes real; the engine doesn't change.</b><br><br>
 <b>This is a portable framework — a CEO's digital chief of staff.</b> The economic-profit engine, the value-chain spine and the visual grammar are bank-agnostic. Re-point the data modules and the same twin reads out any institution's economics: for <b>Nationwide</b> the "corridors" become mortgage and savings products, "correspondents" become funding & payment rails, "clients" become member segments — but the questions (where is value created, where does it leak, which actions lift returns) and the engine are identical. Each domain is a pluggable module an agent can re-populate per business model.`; }
-const SUGGEST=["Why did ROE move?","What's real vs modelled?","Which corridors destroy value?","What if we exit sub-scale MTOs?","How much compliance cost is avoidable?","How much liquidity is trapped?","Are we cheap versus the share price?","Which clients lose money?","Give me a board read-out"];
+const SUGGEST=["Why did ROE move?","What's real vs modelled?","Which corridors destroy value?","What if we exit sub-scale MTOs?","How much compliance cost is avoidable?","How much liquidity is trapped?","Are we cheap versus the share price?","Which clients lose money?","What should we build?","Give me a board read-out"];
 function openConsole(seed){
   const c=document.getElementById("console"); c.classList.add("open");
   if(seed) askTwin(seed==='summary'?'twin read-out':seed,true);
