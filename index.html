@@ -175,8 +175,6 @@ tr.clk:hover td{background:#101a29}
 .tab:hover{background:#0e1521;color:var(--ink)}
 .tab.on{background:#121b2b;color:#fff;box-shadow:inset 0 -2px 0 var(--gold)}
 .asof{font-size:11px;color:var(--ink3);font-family:var(--mono);white-space:nowrap}
-#main{padding:24px 28px 64px}
-#main > div{max-width:1240px;margin-left:auto;margin-right:auto}
 .actpick{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .actpick .chk{flex:0 0 17px;height:17px;border:1.5px solid var(--line2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#241900}
 .actpick .chk.on{background:var(--gold);border-color:var(--gold)}
@@ -192,11 +190,17 @@ tr.clk:hover td{background:#101a29}
       <div class="sub">CEO Dashboard</div>
     </div>
   </div>
-  <div id="tabs"></div>
-  <div class="asof">As of June 2026</div>
+  <div style="flex:1"></div>
+  <div class="deskstat"><span class="dot"></span><span>As of June 2026</span><span class="clock" id="clock">--:--:--</span></div>
 </div>
 
-<div id="main"></div>
+<div id="kpis"></div>
+
+<div id="shell">
+  <div id="nav"></div>
+  <div id="main"></div>
+  <div id="right"></div>
+</div>
 
 <script>
 /* ============================================================ DATA ============================================================ */
@@ -645,11 +649,11 @@ function renderKPIs(m){
   const b=baseSnapshot();
   const items=[
     {k:"Return on Equity",v:F.pct(m.roe),d:m.roe-b.roe,df:x=>F.signbp(x*10000),good:1},
-    {k:"Economic Profit",v:F.m(m.ep),d:m.ep-b.ep,df:F.signm,good:1},
+    {k:"Economic Profit",v:'<span style="color:'+epColor(m.ep)+'">'+F.m(m.ep)+'</span>',d:m.ep-b.ep,df:F.signm,good:1},
     {k:"Adj. EBITDA",v:F.m0(m.ebitda),d:m.ebitda-b.ebitda,df:F.signm,good:1},
     {k:"Total Income",v:F.m0(m.income),d:m.income-b.income,df:F.signm,good:1},
     {k:"Cost / Income",v:F.pct(m.cir),d:m.cir-b.cir,df:x=>F.signbp(x*10000),good:-1},
-    {k:valMode==="engine"?"Intrinsic Value · Engine":"Market Cap · CABP",v:F.m0(m.val.base),d:m.val.base-b.val.base,df:F.signm,good:1}
+    {k:"Intrinsic value (12×)",v:F.m0(m.ebitda*12),d:(m.ebitda-b.ebitda)*12,df:F.signm,good:1}
   ];
   document.getElementById("kpis").innerHTML = items.map(it=>{
     const ch=Math.abs(it.d)>0.0001;
@@ -1394,39 +1398,21 @@ function rightStats(v,m){
 }
 function renderRight(){
   const s=scenario;
-  const ctx=RIGHTCTX[activeView]||RIGHTCTX.cockpit;
-  const m=compute();
-  const open=(leversOpen===null)?ANALYTICAL.has(activeView):leversOpen;
-  const lever=(id,label,unit,min,max,step,val,fmt)=>`
+  const lever=(id,label,min,max,step,val,fmt)=>`
     <div class="lever"><div class="lh"><span>${label}</span><span class="lv" id="lv-${id}">${fmt(val)}</span></div>
     <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="setLever('${id}',this.value)">
     <div class="lr"><span>${fmt(min)}</span><span>${fmt(max)}</span></div></div>`;
   document.getElementById("right").innerHTML=`
-    <div class="ctxcard" style="margin-bottom:12px;padding:11px 12px;background:#0c1422;border:1px solid var(--line2);border-radius:9px">
-      <div class="kicker" style="margin:0 0 5px">On this view</div>
-      <div style="font-size:13px;font-weight:700;color:#fff">${ctx[0]}</div>
-      <div class="flowtag" style="font-size:10.5px;margin:4px 0 8px;line-height:1.45">${ctx[1]}</div>
-      ${rightStats(activeView,m)}
-      ${ctx[2]?`<div class="flowtag" style="margin-top:7px;border-top:1px solid var(--line);padding-top:6px">Key lever → <b class="gold">${ctx[2]}</b></div>`:''}
-    </div>
-    <div class="rsec" onclick="toggleLevers()" style="margin-bottom:${open?'8px':'0'}">
-      <span class="kicker" style="margin:0">⚙ Global scenario controls</span>
-      <span class="caret">${open?'▾ hide':'▸ show'}</span></div>
-    ${open?`
-    <div class="flowtag" style="margin:4px 0 12px">Apply bank-wide, on every view. <span class="btn sm" onclick="event.stopPropagation();resetScenario()">reset</span></div>
-    ${lever('fxMarginBps','FX margin','bps',7,16,0.1,s.fxMarginBps,v=>(+v).toFixed(1)+'bps')}
-    ${lever('volumeGrowthPct','Volume growth','%',-10,30,1,s.volumeGrowthPct,v=>(v>=0?'+':'')+v+'%')}
-    ${lever('rateShiftBps','Rate environment','bps',-200,200,10,s.rateShiftBps,v=>(v>=0?'+':'')+v+'bps')}
-    ${lever('complianceAutomationPct','Compliance automation','%',0,80,5,s.complianceAutomationPct,v=>v+'%')}
-    ${lever('liquidityReleasePct','Release trapped liquidity','%',0,100,5,s.liquidityReleasePct,v=>v+'%')}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div class="kicker" style="margin:0">Scenario Studio</div><span class="btn sm" onclick="resetScenario()">reset</span></div>
+    <div class="flowtag" style="margin-bottom:14px">Pull a lever — every number re-prices live, on every tab.</div>
+    ${lever('fxMarginBps','FX margin (take rate)',7,16,0.1,s.fxMarginBps,v=>(+v).toFixed(1)+'bps')}
+    ${lever('volumeGrowthPct','Volume growth',-10,30,1,s.volumeGrowthPct,v=>(v>=0?'+':'')+v+'%')}
+    ${lever('rateShiftBps','Rate environment',-200,200,10,s.rateShiftBps,v=>(v>=0?'+':'')+v+'bps')}
+    ${lever('complianceAutomationPct','Compliance automation',0,80,5,s.complianceAutomationPct,v=>v+'%')}
+    ${lever('liquidityReleasePct','Release trapped liquidity',0,100,5,s.liquidityReleasePct,v=>v+'%')}
     <div class="divider"></div>
-    <div class="kicker" style="margin-bottom:8px">Executive actions</div>
-    <div id="rightactions">${ACTIONS.map(a=>`<div class="actrow" onclick="toggleAction('${a[0]}')">
-      <div class="chk ${applied[a[0]]?'on':''}">${applied[a[0]]?'✓':''}</div>
-      <div class="at"><div class="t">${a[1]}</div><div class="d">${a[3]?F.signm(a[3])+' rev · ':''}${a[4]?F.signm(-a[4])+' cost':''}</div></div></div>`).join('')}</div>`:''}
-    <div class="divider"></div>
-    <button class="btn gold" style="width:100%" onclick="openConsole('summary')">◆ Ask the Twin for a read-out</button>
-    <button class="btn" style="width:100%;margin-top:8px" onclick="openConsole('method')">ⓘ Sources &amp; portability</button>`;
+    <div class="kicker" style="margin-bottom:6px">The story</div>
+    <div class="flowtag" style="line-height:1.55">Fintech margins on a distressed price. A buyer (StoneX, £287m) and Helios (~45%) both say it's worth more. Fix the 79% cost-income and prove the growth, and the gap closes.</div>`;
 }
 
 /* ============================================================ NAV ============================================================ */
@@ -1443,8 +1429,8 @@ let navOpen=null;
 function activeGroupSec(){ for(const g of NAVGROUPS){ if(g.items.some(it=>it[0]===activeView)) return g.sec; } return ''; }
 function toggleNavGroup(sec){ if(navOpen&&navOpen.has(sec)){navOpen=new Set();}else{navOpen=new Set([sec]);} renderNav(); }
 function renderNav(){
-  const el=document.getElementById("tabs"); if(!el) return;
-  el.innerHTML = NAVGROUPS[0].items.map(it=>`<div class="tab ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')">${it[1].replace('◎ ','')}</div>`).join("");
+  const el=document.getElementById("nav"); if(!el) return;
+  el.innerHTML = `<div class="navsec">The bank, at a glance</div>` + NAVGROUPS[0].items.map(it=>`<div class="navitem ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')"><span>${it[1].replace('◎ ','')}</span></div>`).join("");
 }
 
 /* ============================================================ ASK THE TWIN ============================================================ */
@@ -1556,7 +1542,7 @@ function setLever(id,val){ scenario[id]=parseFloat(val); updateLeverLabel(id); r
 function updateLeverLabel(id){ const el=document.getElementById('lv-'+id); if(!el)return; const v=scenario[id];
   const f={fxMarginBps:x=>x.toFixed(1)+'bps',volumeGrowthPct:x=>(x>=0?'+':'')+x+'%',rateShiftBps:x=>(x>=0?'+':'')+x+'bps',complianceAutomationPct:x=>x+'%',liquidityReleasePct:x=>x+'%'};
   el.textContent=(f[id]||String)(v); }
-function resetScenario(){ scenario={fxMarginBps:11.7,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); }
+function resetScenario(){ scenario={fxMarginBps:11.7,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); renderRight(); }
 function toggleAction(id){ applied[id]=!applied[id]; if(!applied[id]) delete applied[id]; refresh(); }
 function selectCorridor(i){ selectedCorridor=i; refresh(); }
 function setView(v){ activeView=v; renderNav(); refresh(); document.getElementById('main').scrollTop=0; }
@@ -1564,9 +1550,13 @@ function goAction(){ setView('action'); }
 function genNoteWrap(){}
 function refresh(){
   const m=compute();
+  renderKPIs(m);
   document.getElementById("main").innerHTML=VIEWS[activeView](m);
+  document.querySelectorAll('.kpi').forEach(k=>{k.classList.remove('flash');void k.offsetWidth;k.classList.add('flash');});
 }
-// (command bar, scenario toggle and clock removed for the clean CEO layout)
+// clock
+function tick(){ const el=document.getElementById("clock"); if(el) el.textContent=new Date().toLocaleTimeString('en-GB',{hour12:false}); }
+setInterval(tick,1000); tick();
 
 /* ============================================================ SIMPLE 5-TAB STRUCTURE (overrides) ============================================================ */
 const kpiCard=(lab,val,sub,col)=>`<div class="card"><div class="stat"><div class="lab">${lab}</div><div class="num" style="font-size:22px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div></div>`;
@@ -1674,6 +1664,13 @@ VIEWS.cost=function(m){
     ],{h:240})}
     <div class="flowtag" style="margin-top:6px">The biggest consumers are operations (people and technology) and the network behind the franchise. After the cost of the capital employed (${F.pct0(COE)} × £${m.equity.toFixed(0)}m), economic profit is <b style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b> — roughly breakeven. Lowering cost-income is what turns this firmly positive.</div>
   </div>
+  <div class="card" style="margin-bottom:14px"><div class="ch"><h3>CAPITAL TIED UP — NOSTRO LIQUIDITY</h3><span class="meta">£${NOSTRO.reduce((a,n)=>a+n[1],0)}m across 12 currencies · ~£118m trapped</span></div>
+    <div style="display:flex;gap:20px;align-items:center">
+      ${donut(NOSTRO.map((n,i)=>({label:n[0],value:n[1],color:`hsl(${(i*31)%360},62%,55%)`})),{sz:160,center:'£'+NOSTRO.reduce((a,n)=>a+n[1],0)+'m',sub:'nostro balances'})}
+      <div style="flex:1"><div class="kicker" style="margin-bottom:6px">Trapped by currency</div>${hbars(NOSTRO.filter(n=>n[2]>=4).sort((a,b)=>b[2]-a[2]).map(n=>({label:n[0],value:n[2],disp:'£'+n[2]+'m',color:n[2]>10?'#ff5d6c':'#ffb13d'})),{labelW:48,w:440,rowH:21})}</div>
+    </div>
+    <div class="flowtag" style="margin-top:8px">CAB must hold cash in each market to settle payments. About <b style="color:#ff5d6c">£118m is trapped</b> — capital controls, settlement buffers, minimum balances — earning little. Redeploying it into earning assets lifts net interest income (a move on the Strategy tab).</div>
+  </div>
   <div class="card"><div class="ch"><h3>LEVERS — WHAT MOVES COST</h3><span class="meta">short term &amp; long term</span></div>
     <div class="grid2">
       <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Automate KYC, AML and sanctions screening — perpetual KYC and machine-led triage cut financial-crime cost by around a third, with no revenue at risk. Optimise correspondent routing to reduce fees and failed-payment repair.</div></div>
@@ -1697,10 +1694,16 @@ VIEWS.market=function(m){
       ${hbars(TECH.filter(t=>t[4]).map(t=>({label:t[0].split(' ')[0],value:t[4],disp:'£'+t[4]+'m',color:kindColor[t[1]]})),{labelW:90,w:430,rowH:26})}
       <div class="flowtag" style="margin-top:6px">Stablecoins are the biggest — adopt as a rail or be bypassed. Visa Direct / PAPSS compete on consumer corridors. NGN concentration remains the single-corridor worry.</div></div>
   </div>
-  <div class="card" style="margin-bottom:14px"><div class="ch"><h3>THE MOAT — OUR CORRESPONDENT NETWORK</h3><span class="meta">CAB at the hub of 10 core correspondents and 390 local relationships</span></div>
-    ${networkGraph()}
-    <div class="legend"><span><span class="sw" style="background:#37d39a"></span>&gt;99% reliable</span><span><span class="sw" style="background:#ffb13d"></span>97–99%</span><span><span class="sw" style="background:#ff5d6c"></span>&lt;97%</span></div>
-    <div class="flowtag" style="margin-top:6px">Licences, central-bank lines and local-bank relationships in markets others have left — the access a competitor cannot quickly replicate. It is why clients pay, and it widens as rivals de-risk.</div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>THE MOAT — OUR CORRESPONDENT NETWORK</h3><span class="meta">10 core correspondents, 390 local relationships</span></div>
+      ${networkGraph()}
+      <div class="legend"><span><span class="sw" style="background:#37d39a"></span>&gt;99% reliable</span><span><span class="sw" style="background:#ffb13d"></span>97–99%</span><span><span class="sw" style="background:#ff5d6c"></span>&lt;97%</span></div>
+      <div class="flowtag" style="margin-top:6px">Licences, central-bank lines and local-bank relationships in markets others have left — access a competitor cannot quickly replicate, and it widens as rivals de-risk.</div>
+    </div>
+    <div class="card"><div class="ch"><h3>HOW A PAYMENT MOVES</h3><span class="meta">UK → Nigeria, a worked example</span></div>
+      ${paymentTrace()}
+      <div class="flowtag" style="margin-top:6px">A payment crosses four hops. CAB earns the FX spread and a fee; SWIFT, the correspondent leg and compliance are the costs. Re-routing the slow legs cuts cost and failure rate — the unit economics behind every corridor.</div>
+    </div>
   </div>
   <div class="card"><div class="ch"><h3>WHAT HAPPENED — INTELLIGENCE FEED</h3></div>
     ${NEWS.slice(0,7).map(n=>`<div style="display:flex;gap:11px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="flex:0 0 8px;height:8px;border-radius:50%;background:${dot[n[3]]};margin-top:4px"></span><div style="flex:1"><div style="font-size:12px;color:#fff">${n[2]}</div><div class="flowtag" style="margin-top:2px"><span class="pill">${n[1]}</span> <span class="dim3">${n[0]}</span></div></div><span class="tag ${n[3]==='pos'?'pos':n[3]==='neg'?'neg':'gold'}">${n[3]==='pos'?'tailwind':n[3]==='neg'?'headwind':'watch'}</span></div>`).join('')}
@@ -1735,7 +1738,7 @@ VIEWS.strategy=function(m){
 };
 
 /* ============================================================ BOOT ============================================================ */
-renderNav(); refresh();
+renderNav(); renderRight(); refresh();
 </script>
 </body>
 </html>
