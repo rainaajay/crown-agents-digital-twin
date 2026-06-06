@@ -354,16 +354,16 @@ const TECH = [
 // ---- External intelligence feed ----
 const NEWS = [
   // when, category, headline, impact(pos/neg/watch)
-  ["Jun 2026","Corporate action","StoneX's raised 110p / £287m bid for CAB Payments lapses after Helios (~45%) declines to back it; the board had been minded to recommend","watch"],
-  ["Jun 2026","Currency","Central Bank of Nigeria holds policy rate at 26.5%; naira steadier after 2024 FX reforms","pos"],
-  ["1w","Disruption","Stablecoin (USDC/USDT) settlement volumes into Africa up ~60% year-on-year","neg"],
-  ["1w","Development","US aid restructuring — USAID effectively dismantled; flows to Africa down ~35% (touches ~12% of CAB revenue)","neg"],
-  ["2w","Currency","Ghana cedi slips ~6% as IMF tranche timing slips","neg"],
-  ["2w","Competitor","Wise posts +25% volume; sharpens emerging-market FX pricing","neg"],
-  ["3w","Infrastructure","Kenya & Ghana extend PAPSS real-time connectivity","watch"],
-  ["1m","Development","World Bank approves $1.2bn Sahel resilience programme","pos"],
-  ["1m","Regulation","UK FCA APP-fraud reimbursement rules raise control costs","watch"],
-  ["Q1","Competitor","Convera & StoneX expand EM payout reach; correspondent competition intensifies","watch"]
+  ["This month","Corporate action","StoneX walks away from its 110p / £287m approach for CAB after Helios (~45%) refuses to back it; the board had been minded to recommend","watch"],
+  ["This month","Currency","Nigeria holds its policy rate at 26.5% as inflation eases to ~15.7%; the naira is steadier after the 2024 reforms","pos"],
+  ["1 week","Disruption","Stablecoin (USDC / USDT) settlement into Africa is rising fast (~50%+ a year) — a structural threat to remittance margins","neg"],
+  ["1 week","Development","USAID dismantled and US foreign aid down sharply in 2025 — development flows that touch ~12% of CAB's revenue are under pressure","neg"],
+  ["2 weeks","Currency","Ghana cedi slips ~6% as an IMF tranche is delayed","neg"],
+  ["2 weeks","Competitor","Wise reports ~25% volume growth and sharper emerging-market FX pricing","neg"],
+  ["3 weeks","Infrastructure","Kenya and Ghana extend PAPSS real-time connectivity across the region","watch"],
+  ["Last month","Development","World Bank approves a $1.2bn Sahel resilience programme","pos"],
+  ["Last month","Regulation","UK FCA's APP-fraud reimbursement rules raise control costs across the industry","watch"],
+  ["This quarter","Competitor","Convera and StoneX expand emerging-market payout reach; correspondent competition intensifies","watch"]
 ];
 // ---- Forward (board) scenarios ----
 const FSCEN = [
@@ -1608,25 +1608,33 @@ function setRevLens(l){ revLens=l; refresh(); }
 VIEWS.revenue=function(m){
   const lensBtn=(k,lbl)=>`<button class="btn sm ${revLens===k?'gold':''}" onclick="setRevLens('${k}')">${lbl}</button>`;
   let rows;
-  if(revLens==='product') rows=[{label:'Wholesale FX',value:m.fx,color:'#f5b942'},{label:'Payments',value:m.payments,color:'#3fa9ff'},{label:'Banking & treasury',value:m.nii,color:'#34d3c4'},{label:'Trade & other',value:m.trade,color:'#9b7bff'}];
+  if(revLens==='product') rows=[{label:'Wholesale FX · +25%',value:49,color:'#f5b942'},{label:'Payments · flat',value:30,color:'#3fa9ff'},{label:'Banking income · +8%',value:41,color:'#34d3c4'}];
   else if(revLens==='corridor') rows=[...m.corr].sort((a,b)=>b.rev-a.rev).slice(0,8).map(c=>({label:c.c[0]+'→'+c.c[1],value:c.rev,color:'#3fa9ff'}));
   else rows=[...m.clients].sort((a,b)=>b.rev-a.rev).slice(0,8).map(c=>({label:c.cl[0].length>24?c.cl[0].slice(0,22)+'…':c.cl[0],value:c.rev,color:'#3fa9ff'}));
-  const wf=[{label:'FX',value:m.fx,type:'start'},{label:'Payments',value:m.payments,type:'delta'},{label:'Banking',value:m.nii,type:'delta'},{label:'Trade',value:m.trade,type:'delta'},{label:'Total',value:m.income,type:'end'}];
   return `
   <div class="viewhead"><div><div class="kicker">Revenue drivers</div>
     <h2>Where the money comes from</h2>
-    <p>FY25 income <b>${F.m0(m.income)}</b>. FX is the engine: CAB earns a margin on £41.9bn of volume. Growth comes from volume, a richer corridor mix, and holding the margin — the moves to do that are on the Strategy tab.</p></div>
-    <div style="text-align:right"><div class="scenbadge">income yield on volume</div><div class="mono gold" style="font-size:20px">${(m.income/(BASE.fxVolBn*m.vf*1000)*10000).toFixed(1)}bps</div></div></div>
+    <p>FY25 income rose 12% to <b>£119m</b>. The engine is wholesale FX — a margin earned on <b>£41.9bn</b> of volume (up 13%). Income grows when volume rises, the mix shifts to higher-margin currencies, and the margin holds.</p></div>
+    <div style="text-align:right"><div class="scenbadge">FX take rate</div><div class="mono gold" style="font-size:22px">0.15%</div><div class="scenbadge">up from 0.14%</div></div></div>
   <div class="grid2" style="margin-bottom:14px">
-    <div class="card"><div class="ch"><h3>INCOME BY SOURCE</h3><span class="tag gold">${F.m0(m.income)}</span></div>${waterfall(wf,{h:220})}</div>
-    <div class="card"><div class="ch"><h3>DRIVERS</h3><div style="display:flex;gap:5px">${lensBtn('product','By product')}${lensBtn('corridor','By corridor')}${lensBtn('client','By client')}</div></div>
-      ${hbars(rows.map(r=>({label:r.label,value:r.value,disp:F.m(r.value),color:r.color})),{labelW:revLens==='product'?140:155,w:520})}
+    <div class="card"><div class="ch"><h3>WHERE REVENUE COMES FROM</h3><div style="display:flex;gap:5px">${lensBtn('product','By line')}${lensBtn('corridor','By corridor')}${lensBtn('client','By client')}</div></div>
+      ${hbars(rows.map(r=>({label:r.label,value:r.value,disp:F.m(r.value),color:r.color})),{labelW:revLens==='product'?150:155,w:520})}
+      ${revLens==='product'?'<div class="flowtag" style="margin-top:6px">The three reported lines. FX drove the recovery (+25%); banking income — net interest plus trade finance — grew 8%; payments was flat, and is the line to re-accelerate.</div>':revLens==='corridor'?'<div class="flowtag" style="margin-top:6px">Top lanes by revenue. The named corridors are about 70% of the FX &amp; payments book; the rest is a long tail.</div>':'<div class="flowtag" style="margin-top:6px">Top relationships by revenue. Banks are ~60% of the book, fintechs &amp; corporates ~28%, development organisations ~12%.</div>'}
+    </div>
+    <div class="card"><div class="ch"><h3>THE ENGINE — WHOLESALE FX</h3></div>
+      <div class="grid2">
+        <div class="stat"><div class="lab">FX income</div><div class="num" style="font-size:20px">£49m</div><div class="sub">+25% year-on-year</div></div>
+        <div class="stat"><div class="lab">FX &amp; payment volume</div><div class="num" style="font-size:20px">£41.9bn</div><div class="sub">+13%</div></div>
+        <div class="stat"><div class="lab">Take rate (margin)</div><div class="num" style="font-size:20px">0.15%</div><div class="sub">up from 0.14%</div></div>
+        <div class="stat"><div class="lab">Active clients</div><div class="num" style="font-size:20px">592</div><div class="sub">from 546</div></div>
+      </div>
+      <div class="flowtag" style="margin-top:10px">Revenue is volume × take rate × mix. Each 1bp of take rate on £41.9bn is roughly £4m — so pricing discipline and corridor mix matter as much as winning new volume.</div>
     </div>
   </div>
-  <div class="card"><div class="ch"><h3>LEVERS — WHAT MOVES REVENUE</h3><span class="meta">short term &amp; long term</span></div>
+  <div class="card"><div class="ch"><h3>WHAT MOVES REVENUE</h3><span class="meta">short term &amp; long term</span></div>
     <div class="grid2">
-      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Hold or raise the FX margin — every 1bp on £41.9bn is roughly £4m. Reprice the loss-making frontier corridors (NGN secondary, GHS, CDF, SLE) rather than subsidising volume. Steer the mix toward higher-margin currencies.</div></div>
-      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Win anchor bank and development-finance mandates — durable, high-value, capital-light. Build a stablecoin and real-time settlement rail to grow volume and cut cost. Extend central-bank relationships into new corridors.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Hold or raise the FX take rate; reprice the loss-making frontier corridors (NGN secondary, GHS, CDF, SLE) rather than subsidising volume; steer the mix toward higher-margin currencies.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Re-accelerate payments; win anchor bank and development-finance mandates; build a stablecoin and real-time settlement rail to grow volume and lower unit cost.</div></div>
     </div>
   </div>`;
 };
