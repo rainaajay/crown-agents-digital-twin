@@ -169,6 +169,17 @@ tr.clk:hover td{background:#101a29}
 .gridln{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4}
 .svgnum{font-family:var(--mono);font-size:10px;fill:var(--ink)}
 .wf-conn{stroke:var(--ink3);stroke-width:1;stroke-dasharray:2 3}
+/* top tabs + clean full-width layout */
+#tabs{flex:1;display:flex;gap:4px;align-items:center;margin-left:14px}
+.tab{padding:9px 17px;font-size:13px;color:var(--ink2);cursor:pointer;border-radius:8px;font-weight:600;letter-spacing:.2px}
+.tab:hover{background:#0e1521;color:var(--ink)}
+.tab.on{background:#121b2b;color:#fff;box-shadow:inset 0 -2px 0 var(--gold)}
+.asof{font-size:11px;color:var(--ink3);font-family:var(--mono);white-space:nowrap}
+#main{padding:24px 28px 64px}
+#main > div{max-width:1240px;margin-left:auto;margin-right:auto}
+.actpick{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.actpick .chk{flex:0 0 17px;height:17px;border:1.5px solid var(--line2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#241900}
+.actpick .chk.on{background:var(--gold);border-color:var(--gold)}
 </style>
 </head>
 <body>
@@ -177,38 +188,15 @@ tr.clk:hover td{background:#101a29}
   <div class="brand">
     <div class="crest">CA</div>
     <div>
-      <h1>Crown Agents Bank</h1>
-      <div class="sub">Economic Digital Twin</div>
+      <h1>CAB Payments</h1>
+      <div class="sub">CEO Dashboard</div>
     </div>
   </div>
-  <div id="crumb">Overview</div>
-  <div id="cmdwrap">
-    <span class="ic">❯</span>
-    <input id="cmd" placeholder="Ask the twin —  why did ROE move?  which corridors destroy value?  what if we exit sub-scale MTOs?" autocomplete="off">
-    <span class="hint">ENTER</span>
-  </div>
-  <div class="toggle" id="scentoggle">
-    <button data-mode="street" class="on">THE STREET · CABP</button>
-    <button data-mode="engine">THE ENGINE · INTRINSIC</button>
-  </div>
-  <div class="deskstat">
-    <span class="dot"></span><span>LONDON DESK OPEN</span>
-    <span class="clock" id="clock">--:--:--</span>
-  </div>
+  <div id="tabs"></div>
+  <div class="asof">As of June 2026</div>
 </div>
 
-<div id="kpis"></div>
-
-<div id="shell">
-  <div id="nav"></div>
-  <div id="main"></div>
-  <div id="right"></div>
-</div>
-
-<div id="console">
-  <div class="ch"><h3>◆ TWIN CONSOLE</h3><span class="btn sm" onclick="document.getElementById('console').classList.remove('open')">✕ close</span></div>
-  <div class="body" id="conbody"></div>
-</div>
+<div id="main"></div>
 
 <script>
 /* ============================================================ DATA ============================================================ */
@@ -1455,15 +1443,8 @@ let navOpen=null;
 function activeGroupSec(){ for(const g of NAVGROUPS){ if(g.items.some(it=>it[0]===activeView)) return g.sec; } return ''; }
 function toggleNavGroup(sec){ if(navOpen&&navOpen.has(sec)){navOpen=new Set();}else{navOpen=new Set([sec]);} renderNav(); }
 function renderNav(){
-  const item=it=>`<div class="navitem ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')"><span>${it[1]}</span></div>`;
-  document.getElementById("nav").innerHTML = NAVGROUPS.map(g=>{
-    if(!g.sec) return g.items.map(item).join("");
-    const open=(g.sec===activeGroupSec())||(navOpen&&navOpen.has(g.sec));
-    return `<div class="navsec navtoggle" onclick="toggleNavGroup('${g.sec.replace(/'/g,"\\'")}')"><span>${g.sec}</span><span class="caret">${open?'▾':'▸'}</span></div>`+(open?g.items.map(item).join(""):"");
-  }).join("");
-  const cg=NAVGROUPS.find(g=>g.items.some(it=>it[0]===activeView));
-  const lab=cg?cg.items.find(it=>it[0]===activeView)[1].replace('◎ ',''):'';
-  const cr=document.getElementById('crumb'); if(cr) cr.textContent=(cg&&cg.sec?cg.sec+' · ':'')+lab;
+  const el=document.getElementById("tabs"); if(!el) return;
+  el.innerHTML = NAVGROUPS[0].items.map(it=>`<div class="tab ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')">${it[1].replace('◎ ','')}</div>`).join("");
 }
 
 /* ============================================================ ASK THE TWIN ============================================================ */
@@ -1575,36 +1556,17 @@ function setLever(id,val){ scenario[id]=parseFloat(val); updateLeverLabel(id); r
 function updateLeverLabel(id){ const el=document.getElementById('lv-'+id); if(!el)return; const v=scenario[id];
   const f={fxMarginBps:x=>x.toFixed(1)+'bps',volumeGrowthPct:x=>(x>=0?'+':'')+x+'%',rateShiftBps:x=>(x>=0?'+':'')+x+'bps',complianceAutomationPct:x=>x+'%',liquidityReleasePct:x=>x+'%'};
   el.textContent=(f[id]||String)(v); }
-function resetScenario(){ scenario={fxMarginBps:11.7,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); renderRight(); }
-function toggleAction(id){ applied[id]=!applied[id]; if(!applied[id]) delete applied[id]; refresh(); renderRight(); }
+function resetScenario(){ scenario={fxMarginBps:11.7,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); }
+function toggleAction(id){ applied[id]=!applied[id]; if(!applied[id]) delete applied[id]; refresh(); }
 function selectCorridor(i){ selectedCorridor=i; refresh(); }
-function setView(v){ activeView=v; leversOpen=null; renderNav(); renderRight(); refresh(); document.getElementById('main').scrollTop=0; }
+function setView(v){ activeView=v; renderNav(); refresh(); document.getElementById('main').scrollTop=0; }
 function goAction(){ setView('action'); }
 function genNoteWrap(){}
 function refresh(){
   const m=compute();
-  renderKPIs(m);
   document.getElementById("main").innerHTML=VIEWS[activeView](m);
-  // flash kpis
-  document.querySelectorAll('.kpi').forEach(k=>{k.classList.remove('flash');void k.offsetWidth;k.classList.add('flash');});
 }
-
-// scenario toggle
-document.getElementById("scentoggle").addEventListener("click",e=>{
-  const btn=e.target.closest("button"); if(!btn)return;
-  valMode=btn.dataset.mode;
-  document.querySelectorAll("#scentoggle button").forEach(b=>b.classList.toggle("on",b===btn));
-  refresh();
-});
-// command bar
-document.getElementById("cmd").addEventListener("keydown",e=>{
-  if(e.key==="Enter"&&e.target.value.trim()){ openConsole(); askTwin(e.target.value.trim(),false); e.target.value=""; }
-});
-document.getElementById("cmd").addEventListener("focus",()=>{ openConsole(); });
-
-// clock
-function tick(){ const d=new Date(); document.getElementById("clock").textContent=d.toLocaleTimeString('en-GB',{hour12:false}); }
-setInterval(tick,1000); tick();
+// (command bar, scenario toggle and clock removed for the clean CEO layout)
 
 /* ============================================================ SIMPLE 5-TAB STRUCTURE (overrides) ============================================================ */
 const kpiCard=(lab,val,sub,col)=>`<div class="card"><div class="stat"><div class="lab">${lab}</div><div class="num" style="font-size:22px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div></div>`;
@@ -1615,7 +1577,7 @@ VIEWS.overview=function(m){
   return `
   <div class="viewhead"><div><div class="kicker">Overview · Where we are today</div>
     <h2>Fintech margins, a distressed price</h2>
-    <p>CAB Payments owns the regulated rails into the world's hardest markets. The screen prices it as a broken IPO — yet a buyer (StoneX, £${bid}m) and the ${BASE.heliosStake}% owner (Helios) have both said it's worth more. The gap is the opportunity.</p></div>
+    <p>CAB Payments owns the regulated rails into the world's hardest markets. The share price still reflects the 2023 setback — yet a £${bid}m bid from StoneX, and Helios's refusal to sell at that price, both say it is worth more. That gap is the opportunity.</p></div>
     <div style="text-align:right"><div class="scenbadge">economic profit (book)</div><div class="mono" style="font-size:24px;color:${epColor(m.ep)}">${F.signm(m.ep)}</div><div class="scenbadge">ROE ${F.pct(m.roe)} vs CoE ${F.pct0(COE)}</div></div></div>
   <div class="grid4" style="margin-bottom:14px">
     ${kpiCard('Share price','~'+BASE.sharePence+'p','CABP · LSE')}
@@ -1653,7 +1615,7 @@ VIEWS.revenue=function(m){
   return `
   <div class="viewhead"><div><div class="kicker">Revenue drivers</div>
     <h2>Where the money comes from</h2>
-    <p>FY25 income <b>${F.m0(m.income)}</b>. FX is the engine — CAB earns a margin (take rate) on £41.9bn of volume. The dial is the <b>FX margin</b> (right-hand panel) and the corridor mix.</p></div>
+    <p>FY25 income <b>${F.m0(m.income)}</b>. FX is the engine: CAB earns a margin on £41.9bn of volume. Growth comes from volume, a richer corridor mix, and holding the margin — the moves to do that are on the Strategy tab.</p></div>
     <div style="text-align:right"><div class="scenbadge">income yield on volume</div><div class="mono gold" style="font-size:20px">${(m.income/(BASE.fxVolBn*m.vf*1000)*10000).toFixed(1)}bps</div></div></div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card"><div class="ch"><h3>INCOME BY SOURCE</h3><span class="tag gold">${F.m0(m.income)}</span></div>${waterfall(wf,{h:220})}</div>
@@ -1663,8 +1625,8 @@ VIEWS.revenue=function(m){
   </div>
   <div class="card"><div class="ch"><h3>LEVERS — WHAT MOVES REVENUE</h3><span class="meta">short term &amp; long term</span></div>
     <div class="grid2">
-      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Hold or raise the <b>FX margin</b> (panel) — every 1bps on £41.9bn ≈ £4m. <b>Reprice the value-destroying frontier corridors</b> (NGN secondary, GHS, CDF, SLE) rather than subsidising volume. Steer mix toward higher-margin currencies.</div></div>
-      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Win <b>anchor bank &amp; development-finance mandates</b> — durable, high-value, low-capital. Build a <b>stablecoin / real-time settlement rail</b> to grow volume and cut cost. Deepen central-bank relationships into new corridors.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Hold or raise the FX margin — every 1bp on £41.9bn is roughly £4m. Reprice the loss-making frontier corridors (NGN secondary, GHS, CDF, SLE) rather than subsidising volume. Steer the mix toward higher-margin currencies.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Win anchor bank and development-finance mandates — durable, high-value, capital-light. Build a stablecoin and real-time settlement rail to grow volume and cut cost. Extend central-bank relationships into new corridors.</div></div>
     </div>
   </div>`;
 };
@@ -1687,8 +1649,8 @@ VIEWS.cost=function(m){
   </div>
   <div class="card"><div class="ch"><h3>LEVERS — WHAT MOVES COST</h3><span class="meta">short term &amp; long term</span></div>
     <div class="grid2">
-      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note"><b>Automate KYC / AML / sanctions</b> (compliance lever, panel) — perpetual KYC + ML triage cuts financial-crime cost ~37% with no revenue at risk. Optimise correspondent routing to cut fees and failed-payment repair.</div></div>
-      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Re-platform onto one scalable stack so volume grows without headcount; consolidate vendor tooling; shift the cost base from people to technology. The prize: cost-income from 79% toward the low 60s.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Automate KYC, AML and sanctions screening — perpetual KYC and machine-led triage cut financial-crime cost by around a third, with no revenue at risk. Optimise correspondent routing to reduce fees and failed-payment repair.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Move onto one scalable platform so volume grows without headcount; consolidate vendor tooling; shift the cost base from people to technology. The prize: cost-income from 79% toward the low 60s.</div></div>
     </div>
   </div>`;
 };
@@ -1723,7 +1685,7 @@ VIEWS.strategy=function(m){
   return `
   <div class="viewhead"><div><div class="kicker">Strategy & plan</div>
     <h2>Where to grow, fix and exit</h2>
-    <p>The head-of-strategy view: which areas to <b style="color:#37d39a">invest in and grow</b>, which to <b style="color:#f5b942">fix now</b>, and which to <b style="color:#ff5d6c">get out of</b> — plus the macro scenarios that help or hurt. Apply moves in the right-hand panel and watch ROE respond.</p></div>
+    <p>Where to <b style="color:#37d39a">invest and grow</b>, what to <b style="color:#f5b942">fix now</b>, and what to <b style="color:#ff5d6c">exit</b> — and the scenarios that help or hurt. Tick a move below to model its impact on returns.</p></div>
     <div style="text-align:right"><div class="scenbadge">applied programme</div><div class="mono" style="font-size:20px;color:${(m.roe-b.roe)>=0?'var(--pos)':'var(--neg)'}">${F.signbp((m.roe-b.roe)*10000)} ROE</div></div></div>
   <div class="grid3" style="margin-bottom:14px">
     ${board('▲ GROW / INVEST','#37d39a',grow)}
@@ -1731,8 +1693,9 @@ VIEWS.strategy=function(m){
     ${board('▼ EXIT','#ff5d6c',exit)}
   </div>
   <div class="grid2">
-    <div class="card"><div class="ch"><h3>ACTIONS — IMPACT ON ROE</h3><span class="meta">apply in the panel</span></div>
-      ${hbars(ACTIONS.map(a=>{const one=compute(scenario,{[a[0]]:true});return {label:a[1].length>26?a[1].slice(0,24)+'…':a[1],value:(one.roe-b.roe)*10000,disp:F.signbp((one.roe-b.roe)*10000),color:(one.roe-b.roe)>=0?'#37d39a':'#ff5d6c'};}).sort((x,y)=>y.value-x.value),{diverging:true,w:520,rowH:24,labelW:175})}</div>
+    <div class="card"><div class="ch"><h3>WHAT WE CAN DO — TICK TO MODEL</h3><span class="meta">impact ripples through every tab</span></div>
+      ${ACTIONS.map(a=>{const one=compute(scenario,{[a[0]]:true});const d=(one.roe-b.roe)*10000;const on=!!applied[a[0]];return `<div class="actpick" onclick="toggleAction('${a[0]}')"><div class="chk ${on?'on':''}">${on?'✓':''}</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:#fff">${a[1]}</div><div class="flowtag" style="font-size:10px">${a[2]}</div></div><div class="mono" style="color:${d>=0?'var(--pos)':'var(--neg)'};font-size:12px">${F.signbp(d)} ROE</div></div>`;}).join('')}
+      ${Object.keys(applied).length?`<div style="text-align:right;margin-top:10px"><span class="btn sm" onclick="resetScenario()">reset</span></div>`:''}</div>
     <div class="card"><div class="ch"><h3>MACRO SCENARIOS — GOOD &amp; BAD</h3><span class="meta">5-year shocks → ROE</span></div>
       ${hbars(scen.map(x=>({label:x.s[1].length>26?x.s[1].slice(0,24)+'…':x.s[1],value:x.roeD,disp:F.signbp(x.roeD*100),color:x.roeD>=0?'#37d39a':'#ff5d6c'})),{diverging:true,w:520,rowH:26,labelW:175})}
       <div class="flowtag" style="margin-top:6px">AI / compliance automation is the big upside; stablecoin disruption and a Nigeria devaluation are the big downside risks.</div></div>
@@ -1740,7 +1703,7 @@ VIEWS.strategy=function(m){
 };
 
 /* ============================================================ BOOT ============================================================ */
-renderNav(); renderRight(); refresh();
+renderNav(); refresh();
 </script>
 </body>
 </html>
