@@ -181,7 +181,7 @@ tr.clk:hover td{background:#101a29}
       <div class="sub">Economic Digital Twin</div>
     </div>
   </div>
-  <div id="crumb">Cockpit</div>
+  <div id="crumb">Overview</div>
   <div id="cmdwrap">
     <span class="ic">❯</span>
     <input id="cmd" placeholder="Ask the twin —  why did ROE move?  which corridors destroy value?  what if we exit sub-scale MTOs?" autocomplete="off">
@@ -401,7 +401,7 @@ const RISK = {
 let scenario = {fxMarginBps:11.7, volumeGrowthPct:0, rateShiftBps:0, complianceAutomationPct:0, liquidityReleasePct:0};
 let selectedScenario = null;
 let applied = {};   // action id -> true
-let activeView = "cockpit";
+let activeView = "overview";
 let valMode = "street";
 let selectedCorridor = null;
 
@@ -1385,46 +1385,22 @@ function actionTable(m,b,compact){
 
 /* ============================================================ RIGHT RAIL (LEVERS + ACTIONS) ============================================================ */
 const RIGHTCTX={
-  cockpit:["The cockpit","The whole bank on one screen — pull a lever and every number re-prices.","FX margin"],
-  market:["Market vs intrinsic","Use the top-bar toggle to switch the Street / Engine lens.","Volume growth"],
-  enterprise:["Value creation","How £119m of income becomes economic profit — measured on book and market basis.",""],
-  revenue:["Revenue engine","FX is the biggest lever — try the FX margin.","FX margin"],
-  cost:["Cost engine","Compliance automation is the most attackable line.","Compliance automation"],
-  ep:["Economic profit","Group ROE against cost of equity, decomposed every way.","FX margin"],
-  corridor:["Corridors","Click a lane on the map to inspect and reprice it.","FX margin"],
-  client:["Clients","Exit or reprice the value-destroying tail.",""],
-  network:["Correspondent network","Reliability and cost of the settlement rails.",""],
-  liquidity:["Liquidity & treasury","Redeploy trapped balances into earning assets.","Release trapped liquidity"],
-  strategic:["Strategic outlook","Where growth is — and whether CAB is positioned for it.",""],
-  ops:["Operational health","Yesterday's engine room.",""],
-  risk:["Risk & compliance","Where risk could suddenly bite.",""],
-  tech:["Technology & disruption","Threats and tailwinds to the moat.",""],
-  news:["News & intelligence","External signals that move revenue, risk and liquidity.",""],
-  fscenario:["Scenario engine","Run a board-level shock through the bank.",""],
-  action:["Action centre","Tick a move — the whole bank re-prices.",""]
+  overview:["Overview","Where we are: value, returns, and how we compare.",""],
+  revenue:["Revenue drivers","FX is the engine — the FX margin is the dial.","FX margin"],
+  cost:["Cost drivers","Compliance automation is the most attackable cost.","Compliance automation"],
+  market:["Market & competitors","Who we're up against and what's changing.",""],
+  strategy:["Strategy & plan","Grow, fix, exit — and the actions that move ROE.",""]
 };
-const ANALYTICAL=new Set(['cockpit','market','revenue','cost','ep','corridor','liquidity','fscenario']);
+const ANALYTICAL=new Set(['overview','revenue','cost','strategy']);
 let leversOpen=null;
 function toggleLevers(){ const cur=(leversOpen===null)?ANALYTICAL.has(activeView):leversOpen; leversOpen=!cur; renderRight(); }
 function rightStats(v,m){
   const S={
-    cockpit:[['ROE',F.pct(m.roe)],['Economic profit',F.signm(m.ep)]],
-    market:[['Share price',BASE.sharePence+'p'],['StoneX bid','£'+BASE.stoneXVal+'m']],
+    overview:[['Market cap','£'+BASE.mktCap+'m'],['ROE vs CoE',F.pct(m.roe)+' / '+F.pct0(COE)]],
     revenue:[['Total income',F.m0(m.income)],['FX share',F.pct0(m.fx/m.income)]],
     cost:[['Cost / income',F.pct(m.cir)],['Staff cost',F.m0(m.staff)]],
-    ep:[['ROE',F.pct(m.roe)],['Cost of equity',F.pct0(COE)]],
-    corridor:[['Value-destroying lanes',String(m.corr.filter(c=>c.ep<0).length)],['Annual flow',F.bn(BASE.fxVolBn*m.vf)]],
-    client:[['Active clients','592'],['Negative-EP shown',String(m.clients.filter(c=>c.ep<0).length)]],
-    liquidity:[['Trapped liquidity','£118m'],['LCR / NSFR',BASE.lcr+' / '+BASE.nsfr]],
-    network:[['Core correspondents','10'],['Of relationships','390']],
-    ops:[['Failed payments',OPS.failedPct+'%'],['Incidents (24h)',String(OPS.incidents)]],
-    risk:[['AML open',String(RISK.amlOpen)],['CET1 ratio',BASE.cet1Pct+'%']],
-    strategic:[['Top market','Kenya (90)'],['Markets shown','9']],
-    tech:[['Revenue at risk','£'+TECH.reduce((a,t)=>a+(t[4]||0),0)+'m'],['Biggest threat','Stablecoins']],
-    news:[['Headwinds',String(NEWS.filter(n=>n[3]==='neg').length)],['Top signal','Takeover lapsed']],
-    enterprise:[['Total income',F.m0(m.income)],['Value-chain stages','7']],
-    action:[['Moves applied',String(Object.keys(applied).length)],['EP vs base',F.signm(m.ep-baseSnapshot().ep)]],
-    fscenario:[['Scenario',selectedScenario?FSCEN.find(x=>x[0]===selectedScenario)[1].slice(0,20):'none selected']]
+    market:[['StoneX bid','£'+BASE.stoneXVal+'m'],['Headwinds',String(NEWS.filter(n=>n[3]==='neg').length)]],
+    strategy:[['Moves applied',String(Object.keys(applied).length)],['ROE vs base',F.signbp((m.roe-baseSnapshot().roe)*10000)]]
   };
   return (S[v]||[]).filter(x=>x&&x[0]).map(st=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:2.5px 0"><span class="dim">${st[0]}</span><b class="mono">${st[1]}</b></div>`).join('');
 }
@@ -1467,13 +1443,13 @@ function renderRight(){
 
 /* ============================================================ NAV ============================================================ */
 const NAVGROUPS=[
-  {sec:"", items:[["cockpit","◎ Cockpit"]]},
-  {sec:"Market", items:[["market","How the market sees us"]]},
-  {sec:"The economic engine", items:[["revenue","Revenue engine"],["cost","Cost engine"],["enterprise","Value creation"],["ep","Economic profit"]]},
-  {sec:"Where value is made", items:[["corridor","Corridors"],["client","Clients"],["strategic","Strategic outlook"]]},
-  {sec:"Operations & risk", items:[["network","Correspondent network"],["liquidity","Liquidity & treasury"],["ops","Operational health"],["risk","Risk & compliance"]]},
-  {sec:"The outside world", items:[["tech","Technology & disruption"],["news","News & intelligence"]]},
-  {sec:"Decisions", items:[["action","Action centre"],["fscenario","Scenario engine"]]}
+  {sec:"", items:[
+    ["overview","◎ Overview"],
+    ["revenue","Revenue drivers"],
+    ["cost","Cost drivers"],
+    ["market","Market & competitors"],
+    ["strategy","Strategy & plan"]
+  ]}
 ];
 let navOpen=null;
 function activeGroupSec(){ for(const g of NAVGROUPS){ if(g.items.some(it=>it[0]===activeView)) return g.sec; } return ''; }
@@ -1481,7 +1457,7 @@ function toggleNavGroup(sec){ if(navOpen&&navOpen.has(sec)){navOpen=new Set();}e
 function renderNav(){
   const item=it=>`<div class="navitem ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')"><span>${it[1]}</span></div>`;
   document.getElementById("nav").innerHTML = NAVGROUPS.map(g=>{
-    if(!g.sec) return item(g.items[0]);
+    if(!g.sec) return g.items.map(item).join("");
     const open=(g.sec===activeGroupSec())||(navOpen&&navOpen.has(g.sec));
     return `<div class="navsec navtoggle" onclick="toggleNavGroup('${g.sec.replace(/'/g,"\\'")}')"><span>${g.sec}</span><span class="caret">${open?'▾':'▸'}</span></div>`+(open?g.items.map(item).join(""):"");
   }).join("");
@@ -1629,6 +1605,139 @@ document.getElementById("cmd").addEventListener("focus",()=>{ openConsole(); });
 // clock
 function tick(){ const d=new Date(); document.getElementById("clock").textContent=d.toLocaleTimeString('en-GB',{hour12:false}); }
 setInterval(tick,1000); tick();
+
+/* ============================================================ SIMPLE 5-TAB STRUCTURE (overrides) ============================================================ */
+const kpiCard=(lab,val,sub,col)=>`<div class="card"><div class="stat"><div class="lab">${lab}</div><div class="num" style="font-size:22px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div></div>`;
+
+VIEWS.overview=function(m){
+  const street=BASE.mktCap, bid=BASE.stoneXVal, intrinsic=m.ebitda*12;
+  const mktYield=m.netProfit/BASE.mktCap;
+  return `
+  <div class="viewhead"><div><div class="kicker">Overview · Where we are today</div>
+    <h2>Fintech margins, a distressed price</h2>
+    <p>CAB Payments owns the regulated rails into the world's hardest markets. The screen prices it as a broken IPO — yet a buyer (StoneX, £${bid}m) and the ${BASE.heliosStake}% owner (Helios) have both said it's worth more. The gap is the opportunity.</p></div>
+    <div style="text-align:right"><div class="scenbadge">economic profit (book)</div><div class="mono" style="font-size:24px;color:${epColor(m.ep)}">${F.signm(m.ep)}</div><div class="scenbadge">ROE ${F.pct(m.roe)} vs CoE ${F.pct0(COE)}</div></div></div>
+  <div class="grid4" style="margin-bottom:14px">
+    ${kpiCard('Share price','~'+BASE.sharePence+'p','CABP · LSE')}
+    ${kpiCard('Market cap','£'+street+'m','from £851m at the 2023 IPO','var(--neg)')}
+    ${kpiCard('Income / EBITDA','£'+m.income.toFixed(0)+'m / £'+m.ebitda.toFixed(0)+'m','FY25 · ~30% margin')}
+    ${kpiCard('Cost / income',F.pct(m.cir),'vs ~62% peers — the weakness','var(--warn)')}
+  </div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card hero"><div class="ch"><h3>WHAT IT'S WORTH — MARKET vs BID vs INTRINSIC</h3></div>
+      ${valuationTree(m)}
+      <div class="flowtag" style="margin-top:6px">The market says <b class="neg">£${street}m</b>; StoneX offered <b class="gold">£${bid}m</b>; Helios said even that's too low; a payments-peer re-rating implies <b class="pos">£${intrinsic.toFixed(0)}m</b>.</div></div>
+    <div class="card"><div class="ch"><h3>ARE WE CREATING VALUE?</h3></div>
+      <div class="note" style="margin-bottom:10px">Economic profit = return minus the cost of the capital used. Two ways:</div>
+      <div style="font-size:11.5px;margin-bottom:4px"><b>Book basis</b> — ROE <b>${F.pct(m.roe)}</b> vs cost of capital <b>${F.pct0(COE)}</b></div>${spreadBar(m.roe,COE)}
+      <div style="font-size:11.5px;margin:12px 0 4px"><b>Market basis</b> — earnings yield <b>${F.pct(mktYield)}</b> vs <b>${F.pct0(COE)}</b></div>${spreadBar(mktYield,COE)}
+      <div class="flowtag" style="margin-top:10px">On its own book it's roughly breakeven; at the share price it's below — the market is paying for growth not yet delivered.</div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>HOW WE COMPARE</h3><span class="meta">fintech margins, incumbent multiple</span></div>
+    <div class="grid2">
+      <table><thead><tr><th class="l">Company</th><th>Rev growth</th><th>EBITDA mgn</th><th>EV/EBITDA</th></tr></thead><tbody>${PEERS.map(p=>{const c=p[0].includes('CABP');return `<tr ${c?'style="background:rgba(245,185,66,.08)"':''}><td class="l" ${c?'style="color:#f5b942;font-weight:700"':''}>${p[0]}</td><td>${p[2]>=0?'+':''}${p[2]}%</td><td>${p[3]?p[3]+'%':'—'}</td><td>${p[4]?p[4].toFixed(1)+'×':'—'}</td></tr>`;}).join('')}</tbody></table>
+      <div>${scatter(PEERS.filter(p=>p[3]).map(p=>({x:p[2],y:p[3],r:p[0].includes('CABP')?10:7,label:p[0].split(' ')[0],color:p[0].includes('CABP')?'#f5b942':'#3fa9ff'})),{xlab:'Revenue growth %',ylab:'EBITDA margin %',h:240})}</div>
+    </div>
+  </div>`;
+};
+
+let revLens='product';
+function setRevLens(l){ revLens=l; refresh(); }
+VIEWS.revenue=function(m){
+  const lensBtn=(k,lbl)=>`<button class="btn sm ${revLens===k?'gold':''}" onclick="setRevLens('${k}')">${lbl}</button>`;
+  let rows;
+  if(revLens==='product') rows=[{label:'Wholesale FX',value:m.fx,color:'#f5b942'},{label:'Payments',value:m.payments,color:'#3fa9ff'},{label:'Banking & treasury',value:m.nii,color:'#34d3c4'},{label:'Trade & other',value:m.trade,color:'#9b7bff'}];
+  else if(revLens==='corridor') rows=[...m.corr].sort((a,b)=>b.rev-a.rev).slice(0,8).map(c=>({label:c.c[0]+'→'+c.c[1],value:c.rev,color:'#3fa9ff'}));
+  else rows=[...m.clients].sort((a,b)=>b.rev-a.rev).slice(0,8).map(c=>({label:c.cl[0].length>24?c.cl[0].slice(0,22)+'…':c.cl[0],value:c.rev,color:'#3fa9ff'}));
+  const wf=[{label:'FX',value:m.fx,type:'start'},{label:'Payments',value:m.payments,type:'delta'},{label:'Banking',value:m.nii,type:'delta'},{label:'Trade',value:m.trade,type:'delta'},{label:'Total',value:m.income,type:'end'}];
+  return `
+  <div class="viewhead"><div><div class="kicker">Revenue drivers</div>
+    <h2>Where the money comes from</h2>
+    <p>FY25 income <b>${F.m0(m.income)}</b>. FX is the engine — CAB earns a margin (take rate) on £41.9bn of volume. The dial is the <b>FX margin</b> (right-hand panel) and the corridor mix.</p></div>
+    <div style="text-align:right"><div class="scenbadge">income yield on volume</div><div class="mono gold" style="font-size:20px">${(m.income/(BASE.fxVolBn*m.vf*1000)*10000).toFixed(1)}bps</div></div></div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>INCOME BY SOURCE</h3><span class="tag gold">${F.m0(m.income)}</span></div>${waterfall(wf,{h:220})}</div>
+    <div class="card"><div class="ch"><h3>DRIVERS</h3><div style="display:flex;gap:5px">${lensBtn('product','By product')}${lensBtn('corridor','By corridor')}${lensBtn('client','By client')}</div></div>
+      ${hbars(rows.map(r=>({label:r.label,value:r.value,disp:F.m(r.value),color:r.color})),{labelW:revLens==='product'?140:155,w:520})}
+    </div>
+  </div>
+  <div class="card"><div class="ch"><h3>LEVERS — WHAT MOVES REVENUE</h3><span class="meta">short term &amp; long term</span></div>
+    <div class="grid2">
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note">Hold or raise the <b>FX margin</b> (panel) — every 1bps on £41.9bn ≈ £4m. <b>Reprice the value-destroying frontier corridors</b> (NGN secondary, GHS, CDF, SLE) rather than subsidising volume. Steer mix toward higher-margin currencies.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Win <b>anchor bank &amp; development-finance mandates</b> — durable, high-value, low-capital. Build a <b>stablecoin / real-time settlement rail</b> to grow volume and cut cost. Deepen central-bank relationships into new corridors.</div></div>
+    </div>
+  </div>`;
+};
+
+VIEWS.cost=function(m){
+  const cashOpex=m.cashOpex;
+  const stack=[{label:'Staff & people',value:m.staff,color:'#3fa9ff'},{label:'Technology',value:m.tech,color:'#34d3c4'},{label:'Financial crime / compliance',value:m.compliance,color:'#ff5d6c'},{label:'Correspondent & settlement',value:m.network,color:'#9b7bff'},{label:'Premises & other',value:m.premises,color:'#9be36a'}];
+  return `
+  <div class="viewhead"><div><div class="kicker">Cost drivers</div>
+    <h2>What it costs to run — and the weakness</h2>
+    <p>Cash cost <b>${F.m0(cashOpex)}</b> on <b>${F.m0(m.income)}</b> income — a <b>${F.pct(m.cir)}</b> cost-income ratio, high for a scalable payments platform (peers ~62%). <b>Staff</b> is the biggest line; <b>financial-crime compliance</b> is the most attackable through automation.</p></div>
+    <div style="text-align:right"><div class="scenbadge">cost / income</div><div class="mono" style="font-size:22px;color:var(--warn)">${F.pct(m.cir)}</div></div></div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>THE COST BASE</h3></div>
+      <div style="display:flex;gap:18px;align-items:center">${donut(stack,{center:F.m0(cashOpex),sub:'cash opex'})}
+      <div style="flex:1">${stack.map(c=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${c.color};margin-right:7px"></span>${c.label}</span><b class="mono">${F.m(c.value)}</b></div>`).join('')}</div></div></div>
+    <div class="card"><div class="ch"><h3>HIGH vs PEERS</h3></div>
+      ${hbars([{label:'CAB Payments',value:79,disp:'79%',color:'#ff5d6c'},{label:'Scalable peers',value:62,disp:'62%',color:'#37d39a'},{label:'Target',value:60,disp:'60%',color:'#f5b942'}],{labelW:120,w:460,rowH:32})}
+      <div class="flowtag" style="margin-top:8px">Every point off the cost-income ratio drops ~£1.2m to profit. Closing to peer levels is the single biggest self-help lever on ROE.</div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>LEVERS — WHAT MOVES COST</h3><span class="meta">short term &amp; long term</span></div>
+    <div class="grid2">
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--pos)">Now</div><div class="note"><b>Automate KYC / AML / sanctions</b> (compliance lever, panel) — perpetual KYC + ML triage cuts financial-crime cost ~37% with no revenue at risk. Optimise correspondent routing to cut fees and failed-payment repair.</div></div>
+      <div><div class="kicker" style="margin-bottom:6px;color:var(--gold)">Long term</div><div class="note">Re-platform onto one scalable stack so volume grows without headcount; consolidate vendor tooling; shift the cost base from people to technology. The prize: cost-income from 79% toward the low 60s.</div></div>
+    </div>
+  </div>`;
+};
+
+VIEWS.market=function(m){
+  const dot={pos:'var(--pos)',neg:'var(--neg)',watch:'var(--warn)'};
+  const kindColor={threat:'#ff5d6c',dual:'#f5b942',tailwind:'#37d39a'};
+  return `
+  <div class="viewhead"><div><div class="kicker">Market & competitors</div>
+    <h2>What's changing around us</h2>
+    <p>Who we're up against, what they're doing, and the worries on the horizon. A real takeover (StoneX 110p / £${BASE.stoneXVal}m, blocked by Helios) signals strategic value; disruption (stablecoins, card rails) signals the need to move.</p></div></div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>COMPETITORS</h3></div>
+      <table><thead><tr><th class="l">Company</th><th class="l">Type</th><th>Growth</th><th>EBITDA mgn</th><th>EV/EBITDA</th></tr></thead><tbody>${PEERS.map(p=>{const c=p[0].includes('CABP');return `<tr ${c?'style="background:rgba(245,185,66,.08)"':''}><td class="l" ${c?'style="color:#f5b942;font-weight:700"':''}>${p[0]}</td><td class="l dim">${p[1]}</td><td>${p[2]>=0?'+':''}${p[2]}%</td><td>${p[3]?p[3]+'%':'—'}</td><td>${p[4]?p[4].toFixed(1)+'×':'—'}</td></tr>`;}).join('')}</tbody></table>
+      <div class="flowtag" style="margin-top:8px">Wise wins on growth; Western Union / Convera are low-multiple incumbents; StoneX and Standard Chartered are strategic consolidators. CAB has the margins of the first, the rating of the last.</div></div>
+    <div class="card"><div class="ch"><h3>THREATS TO THE MOAT</h3><span class="meta">revenue at risk over 5y</span></div>
+      ${hbars(TECH.filter(t=>t[4]).map(t=>({label:t[0].split(' ')[0],value:t[4],disp:'£'+t[4]+'m',color:kindColor[t[1]]})),{labelW:90,w:430,rowH:26})}
+      <div class="flowtag" style="margin-top:6px">Stablecoins are the biggest — adopt as a rail or be bypassed. Visa Direct / PAPSS compete on consumer corridors. NGN concentration remains the single-corridor worry.</div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>WHAT HAPPENED — INTELLIGENCE FEED</h3></div>
+    ${NEWS.slice(0,7).map(n=>`<div style="display:flex;gap:11px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="flex:0 0 8px;height:8px;border-radius:50%;background:${dot[n[3]]};margin-top:4px"></span><div style="flex:1"><div style="font-size:12px;color:#fff">${n[2]}</div><div class="flowtag" style="margin-top:2px"><span class="pill">${n[1]}</span> <span class="dim3">${n[0]}</span></div></div><span class="tag ${n[3]==='pos'?'pos':n[3]==='neg'?'neg':'gold'}">${n[3]==='pos'?'tailwind':n[3]==='neg'?'headwind':'watch'}</span></div>`).join('')}
+  </div>`;
+};
+
+VIEWS.strategy=function(m){
+  const b=baseSnapshot();
+  const grow=[['Kenya & East Africa','fastest-growing markets, strategic score 90'],['Anchor bank & DFI mandates','durable, high-value, low-capital'],['Stablecoin / RTP settlement rail','turn the disruptor into our own rail']];
+  const fix=[['Frontier corridor pricing','reprice NGN secondary, GHS, CDF, SLE'],['Financial-crime automation','cut the biggest attackable cost'],['Trapped nostro liquidity','redeploy ~£118m into earning assets']];
+  const exit=[['Sub-scale MTO cluster','38 names below economic threshold'],['Value-destroying lanes','CDF, SLE, Pacific run negative EP'],['Legacy government payroll','sub-economic mandate']];
+  const board=(title,col,items)=>`<div class="card"><div class="ch"><h3 style="color:${col}">${title}</h3></div>${items.map(i=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-size:12px;font-weight:600;color:#fff">${i[0]}</div><div class="flowtag" style="font-size:10.5px">${i[1]}</div></div>`).join('')}</div>`;
+  const scen=FSCEN.map(s=>{const inc=b.income+s[3],eb=inc-(b.cashOpex+s[4]);const pbt=eb-b.amort-b.da-b.adjusting;const net=pbt-Math.max(0,pbt)*TAXR;return {s,roeD:(net/b.equity-b.roe)*100};});
+  return `
+  <div class="viewhead"><div><div class="kicker">Strategy & plan</div>
+    <h2>Where to grow, fix and exit</h2>
+    <p>The head-of-strategy view: which areas to <b style="color:#37d39a">invest in and grow</b>, which to <b style="color:#f5b942">fix now</b>, and which to <b style="color:#ff5d6c">get out of</b> — plus the macro scenarios that help or hurt. Apply moves in the right-hand panel and watch ROE respond.</p></div>
+    <div style="text-align:right"><div class="scenbadge">applied programme</div><div class="mono" style="font-size:20px;color:${(m.roe-b.roe)>=0?'var(--pos)':'var(--neg)'}">${F.signbp((m.roe-b.roe)*10000)} ROE</div></div></div>
+  <div class="grid3" style="margin-bottom:14px">
+    ${board('▲ GROW / INVEST','#37d39a',grow)}
+    ${board('● FIX NOW','#f5b942',fix)}
+    ${board('▼ EXIT','#ff5d6c',exit)}
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ch"><h3>ACTIONS — IMPACT ON ROE</h3><span class="meta">apply in the panel</span></div>
+      ${hbars(ACTIONS.map(a=>{const one=compute(scenario,{[a[0]]:true});return {label:a[1].length>26?a[1].slice(0,24)+'…':a[1],value:(one.roe-b.roe)*10000,disp:F.signbp((one.roe-b.roe)*10000),color:(one.roe-b.roe)>=0?'#37d39a':'#ff5d6c'};}).sort((x,y)=>y.value-x.value),{diverging:true,w:520,rowH:24,labelW:175})}</div>
+    <div class="card"><div class="ch"><h3>MACRO SCENARIOS — GOOD &amp; BAD</h3><span class="meta">5-year shocks → ROE</span></div>
+      ${hbars(scen.map(x=>({label:x.s[1].length>26?x.s[1].slice(0,24)+'…':x.s[1],value:x.roeD,disp:F.signbp(x.roeD*100),color:x.roeD>=0?'#37d39a':'#ff5d6c'})),{diverging:true,w:520,rowH:26,labelW:175})}
+      <div class="flowtag" style="margin-top:6px">AI / compliance automation is the big upside; stablecoin disruption and a Nigeria devaluation are the big downside risks.</div></div>
+  </div>`;
+};
 
 /* ============================================================ BOOT ============================================================ */
 renderNav(); renderRight(); refresh();
