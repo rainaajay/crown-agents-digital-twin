@@ -176,6 +176,8 @@ tr.clk:hover td{background:#101a29}
 .tab.on{background:#121b2b;color:#fff;box-shadow:inset 0 -2px 0 var(--gold)}
 .asof{font-size:11px;color:var(--ink3);font-family:var(--mono);white-space:nowrap}
 .actpick{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.fnote{font-size:10.5px;color:var(--ink2);line-height:1.5;padding:6px 0;border-bottom:1px solid var(--line)}
+.fnote:last-child{border-bottom:0}.fnote b{color:var(--ink)}
 .actpick .chk{flex:0 0 17px;height:17px;border:1.5px solid var(--line2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#241900}
 .actpick .chk.on{background:var(--gold);border-color:var(--gold)}
 </style>
@@ -221,8 +223,9 @@ const BASE = {
   // disclosed network scale
   centralBanks:30, localRels:390, humanitarianBn:13.5,
   // listed parent: CAB Payments Holdings plc (LSE: CABP) — as of Jun 2026
-  sharePence:82, shares:254, mktCap:208, ipoPence:335, ipoVal:851, ipoYear:2023,
-  consTarget:95, consLo:80, consHi:120, rating:"Buy", nAnalysts:6, pe:12,
+  sharePence:83, shares:254, mktCap:211, ipoPence:335, ipoVal:851, ipoYear:2023,
+  consTarget:78, consLo:45, consHi:100, rating:"Buy", nAnalysts:5, pe:12,
+  barclaysPT:60, barclaysRating:"Equalweight",
   // live takeover situation (2026): StoneX 95p→110p/£287m, board minded to recommend; Helios ~45% blocked it; StoneX withdrew
   stoneXFirst:95, stoneXFinal:110, stoneXVal:287, heliosBid:85, heliosStake:45, asOf:"Jun 2026",
   rev23:137, rev24:106, ebitda23:64.6
@@ -296,12 +299,12 @@ const NOSTRO = [
 
 const PEERS = [
   // name, type, revGrowth, ebitdaMargin, evEbitda, pe
-  ["Wise","Listed fintech",25,22,20,28],
-  ["Ebury (Santander)","PE/strategic",20,25,14,null],
-  ["Convera (ex-WU BS)","Private payments",8,18,11,null],
-  ["Western Union","Listed payments",-3,28,6,7],
+  ["Wise","Listed fintech",16,22,14,30],
+  ["Ebury (Santander)","PE-backed · est.",20,25,13,null],
+  ["Convera","Private · est.",8,18,10,null],
+  ["Western Union","Listed payments",-3,24,6,6],
   ["Standard Chartered","Listed bank",6,null,7,8],
-  ["CAB Payments (CABP)","Listed · LSE",12,29.8,5.8,11.8]
+  ["CAB Payments (CABP)","Listed · LSE",12,29.8,5.8,12]
 ];
 
 // consensus vs actual reconciliation (the gap)
@@ -663,6 +666,32 @@ function renderKPIs(m){
   }).join("");
 }
 
+/* ============================================================ GLOSSARY / FOOTNOTES ============================================================ */
+const GLOSS={
+  "EBITDA":"Earnings before interest, tax, depreciation and amortisation — operating profit before financing and accounting charges.",
+  "EBITDA margin":"Adjusted EBITDA as a share of income — how much of each pound of revenue becomes operating profit (CAB ~30%).",
+  "Take rate":"The margin CAB keeps on the money it moves — 0.15% means keeping 15p of every £100 of FX volume.",
+  "Correspondent & settlement":"Fees CAB pays other banks (Citi, Standard Chartered, local banks) and the SWIFT messaging network to reach markets where it has no account of its own — the toll for using another bank's rails.",
+  "Financial-crime compliance":"The cost of know-your-customer (KYC) checks, anti-money-laundering, sanctions screening and investigations — high because CAB operates in markets others avoid.",
+  "Operations":"Staff, technology and premises — the people and platform that run the bank (the largest part of the cost base).",
+  "Cost-income ratio":"The share of every pound of income eaten by running costs. 79% means only 21p of each pound survives to profit; lower is better.",
+  "Economic profit":"What is left only after paying for the capital employed — a business can earn an accounting profit yet still destroy value if its return is below the cost of that capital.",
+  "Cost of capital":"The return shareholders require for the risk of holding the stock (~11% here). Beat it and you create value; miss it and you erode it.",
+  "Net interest income":"Income CAB earns on the cash and balances it holds, net of funding cost — part of banking income.",
+  "Nostro / trapped liquidity":"CAB's own cash parked in a foreign market to settle payments there. Trapped means it cannot easily be moved or invested — capital tied up earning little.",
+  "EV / EBITDA":"Enterprise value divided by EBITDA — how many years of operating profit the market is paying for the business. A lower multiple means a cheaper valuation."
+};
+function fnotes(keys){
+  keys=(keys||[]).filter(k=>GLOSS[k]); if(!keys.length) return '';
+  return `<div class="card" style="margin-top:14px"><div class="kicker" style="margin-bottom:7px">Notes — what the terms mean</div>${keys.map(k=>`<div class="fnote"><b>${k}</b> — ${GLOSS[k]}</div>`).join('')}</div>`;
+}
+const FNOTES_FOR={
+  overview:["EBITDA margin","Economic profit","Cost of capital","EV / EBITDA"],
+  revenue:["Take rate","Net interest income","EBITDA"],
+  cost:["Operations","Correspondent & settlement","Financial-crime compliance","Cost-income ratio","Economic profit","Cost of capital"],
+  market:["EV / EBITDA","EBITDA margin","Take rate"],
+  strategy:["Economic profit","Nostro / trapped liquidity"]
+};
 /* ============================================================ VIEWS ============================================================ */
 const VIEWS={};
 
@@ -1551,7 +1580,7 @@ function genNoteWrap(){}
 function refresh(){
   const m=compute();
   renderKPIs(m);
-  document.getElementById("main").innerHTML=VIEWS[activeView](m);
+  document.getElementById("main").innerHTML=VIEWS[activeView](m) + fnotes(FNOTES_FOR[activeView]||[]);
   document.querySelectorAll('.kpi').forEach(k=>{k.classList.remove('flash');void k.offsetWidth;k.classList.add('flash');});
 }
 // clock
@@ -1567,7 +1596,7 @@ VIEWS.overview=function(m){
   return `
   <div class="viewhead"><div><div class="kicker">Overview · Where we are today</div>
     <h2>Fintech margins, a distressed price</h2>
-    <p>CAB Payments owns the regulated rails into the world's hardest markets. The share price still reflects the 2023 setback — yet a £${bid}m bid from StoneX, and Helios's refusal to sell at that price, both say it is worth more. That gap is the opportunity.</p></div>
+    <p>CAB Payments owns the regulated rails into the world's hardest markets. The brokers price it cautiously — consensus around ${BASE.consTarget}p, Barclays ${BASE.barclaysRating} at ${BASE.barclaysPT}p — yet a buyer (StoneX, 110p / £${bid}m) and the 45% owner both signalled it is worth more, and on payments-peer multiples it would be worth far more again. The gap is execution: the FX take rate is already recovering, and management has guided to a structural fall in cost-income.</p></div>
     <div style="text-align:right"><div class="scenbadge">economic profit (book)</div><div class="mono" style="font-size:24px;color:${epColor(m.ep)}">${F.signm(m.ep)}</div><div class="scenbadge">ROE ${F.pct(m.roe)} vs CoE ${F.pct0(COE)}</div></div></div>
   <div class="grid4" style="margin-bottom:14px">
     ${kpiCard('Share price','~'+BASE.sharePence+'p','CABP · LSE')}
@@ -1605,7 +1634,7 @@ VIEWS.revenue=function(m){
   <div class="viewhead"><div><div class="kicker">Revenue drivers</div>
     <h2>Where the money comes from</h2>
     <p>FY25 income rose 12% to <b>£119m</b>. The engine is wholesale FX — a margin earned on <b>£41.9bn</b> of volume (up 13%). Income grows when volume rises, the mix shifts to higher-margin currencies, and the margin holds.</p></div>
-    <div style="text-align:right"><div class="scenbadge">FX take rate</div><div class="mono gold" style="font-size:22px">0.15%</div><div class="scenbadge">up from 0.14%</div></div></div>
+    <div style="text-align:right"><div class="scenbadge">FX take rate</div><div class="mono gold" style="font-size:22px">0.15%</div><div class="scenbadge">0.18% in H2, from a 0.12% low</div></div></div>
   <div class="card hero" style="margin-bottom:14px">
     <div class="ch"><h3>GLOBAL FLOW — WHERE MONEY MOVES, AND WHERE IT PAYS</h3><span class="meta">${m.corr.length} corridors · £41.9bn a year · green creates economic profit, red destroys it · click a lane</span></div>
     ${corridorMap(m.corr)}
@@ -1623,7 +1652,7 @@ VIEWS.revenue=function(m){
         <div class="stat"><div class="lab">Take rate (margin)</div><div class="num" style="font-size:20px">0.15%</div><div class="sub">up from 0.14%</div></div>
         <div class="stat"><div class="lab">Active clients</div><div class="num" style="font-size:20px">592</div><div class="sub">from 546</div></div>
       </div>
-      <div class="flowtag" style="margin-top:10px">Revenue is volume × take rate × mix. Each 1bp of take rate on £41.9bn is roughly £4m — so pricing discipline and corridor mix matter as much as winning new volume.</div>
+      <div class="flowtag" style="margin-top:10px">Revenue is volume × take rate × mix. Each 1bp of take rate on £41.9bn is roughly £4m. Management guides income (ex-interest) to compound in the high-teens to low-20s % a year over three years — pricing discipline and mix matter as much as new volume.</div>
     </div>
   </div>
   <div class="card"><div class="ch"><h3>WHAT MOVES REVENUE</h3><span class="meta">short term &amp; long term</span></div>
@@ -1648,7 +1677,7 @@ VIEWS.cost=function(m){
       <div style="flex:1">${stack.map(c=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${c.color};margin-right:7px"></span>${c.label}</span><b class="mono">${F.m(c.value)}</b></div>`).join('')}</div></div></div>
     <div class="card"><div class="ch"><h3>HIGH vs PEERS</h3></div>
       ${hbars([{label:'CAB Payments',value:79,disp:'79%',color:'#ff5d6c'},{label:'Scalable peers',value:62,disp:'62%',color:'#37d39a'},{label:'Target',value:60,disp:'60%',color:'#f5b942'}],{labelW:120,w:460,rowH:32})}
-      <div class="flowtag" style="margin-top:8px">Every point off the cost-income ratio drops ~£1.2m to profit. Closing to peer levels is the single biggest self-help lever on ROE.</div></div>
+      <div class="flowtag" style="margin-top:8px">Every point off the cost-income ratio drops ~£1.2m to profit. The operating leverage is real — H2 2025 adjusted EBITDA rose ~69% half-on-half — and management has guided to a structural fall in cost-income (2026 is a step-up year as it invests in client teams). Closing to peer levels is the biggest self-help lever on ROE.</div></div>
   </div>
   <div class="card hero" style="margin-bottom:14px">
     <div class="ch"><h3>WHERE THE £${m.income.toFixed(0)}m GOES — INCOME TO ECONOMIC PROFIT</h3><span class="meta">every pound is kept as profit or consumed by a cost or the cost of capital</span></div>
