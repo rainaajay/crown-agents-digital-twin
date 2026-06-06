@@ -623,7 +623,7 @@ VIEWS.cockpit=function(m){
   ];
   return `
   <div class="viewhead">
-    <div><div class="kicker">Level 0 · The Cockpit</div>
+    <div><div class="kicker">Overview · The cockpit</div>
       <h2>The living economic map of the bank</h2>
       <p>Every arc is a payment corridor. <b style="color:#37d39a">Green creates economic profit</b>, <b style="color:#ff5d6c">red destroys it</b>. Width = flow, brightness = intensity. Push any lever on the right and the whole bank re-prices in real time.</p>
     </div>
@@ -720,8 +720,8 @@ VIEWS.market=function(m){
   const sc=(lab,val,sub,col)=>`<div class="stat" style="padding:2px 0"><div class="lab">${lab}</div><div class="num" style="font-size:19px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div>`;
   return `
   <div class="viewhead">
-    <div><div class="kicker">Level 1 · Market & Investor View</div>
-      <h2>The street price against intrinsic value</h2>
+    <div><div class="kicker">Market · How the world prices us</div>
+      <h2>The street price, against intrinsic value</h2>
       <p>The bank trades as <b>CAB Payments Holdings (LSE: CABP)</b> — listed July 2023 at 335p (£851m), now ${B.sharePence}p (~£${B.mktCap}m) after the 2024 reset. This view sets <b>what the market pays</b> against <b>what the economic engine is worth</b>; the gap between them is the re-rating opportunity.</p>
     </div>
     <div style="text-align:right"><div class="scenbadge">lens</div><div class="mono gold" style="font-size:18px">${valMode==='engine'?'THE ENGINE':'THE STREET'}</div><div class="scenbadge">toggle top-right ↗</div></div>
@@ -799,7 +799,7 @@ VIEWS.enterprise=function(m){
     ["Recipients","end beneficiaries",m.fx*0.5,"businesses, pensioners, aid recipients"]
   ];
   return `
-  <div class="viewhead"><div><div class="kicker">Level 2 · Enterprise Economic Model</div>
+  <div class="viewhead"><div><div class="kicker">The economic engine · Value chain</div>
     <h2>The bank as a value-creation system</h2>
     <p>Value is created at the top of the chain and consumed at every stage below. Each stage carries revenue, direct &amp; indirect cost, capital, liquidity and compliance effort — netting to economic profit.</p></div></div>
   <div class="card hero" style="margin-bottom:14px">
@@ -851,7 +851,7 @@ VIEWS.revenue=function(m){
     {label:"CAIM",value:m.im,type:"delta"},{label:"Total income",value:m.income,type:"end"}];
   const topCorr=[...m.corr].sort((a,b)=>b.rev-a.rev).slice(0,8);
   return `
-  <div class="viewhead"><div><div class="kicker">Level 3 · Revenue Engine</div>
+  <div class="viewhead"><div><div class="kicker">The economic engine · Revenue</div>
     <h2>How the bank makes money</h2>
     <p>FY25 total income <b>${F.m0(m.income)}</b>. FX is the engine room (${F.pct0(m.fx/m.income)} of revenue) — drag the FX-margin lever and watch the whole stack respond.</p></div>
     <div style="text-align:right"><div class="scenbadge">income / volume</div><div class="mono gold" style="font-size:20px">${(m.income/(BASE.fxVolBn*m.vf*1000)*10000).toFixed(1)}bps</div></div></div>
@@ -905,7 +905,7 @@ VIEWS.cost=function(m){
     {label:"Adjusting items",value:-m.adjusting,type:"delta"},{label:"Tax",value:-m.tax,type:"delta"},
     {label:"Net profit",value:m.netProfit,type:"end"}];
   return `
-  <div class="viewhead"><div><div class="kicker">Level 4 · Cost Engine</div>
+  <div class="viewhead"><div><div class="kicker">The economic engine · Cost</div>
     <h2>Where the money goes — and what's avoidable</h2>
     <p>Cash operating cost <b>${F.m0(cashOpex)}</b> on <b>${F.m0(m.income)}</b> income — a <b>${F.pct(m.cir)}</b> cost-income ratio, high for a scalable payments platform (specialist-peer average ~62%). <b style="color:#3fa9ff">Staff is the dominant line at ${F.m0(m.staff)}</b>; <b style="color:#ff5d6c">financial-crime compliance (${F.m(m.compliance)})</b> is the most attackable through automation.</p></div>
     <div style="text-align:right"><div class="scenbadge">cost / income</div><div class="mono" style="font-size:20px;color:${m.cir<0.66?'var(--pos)':'var(--gold)'}">${F.pct(m.cir)}</div></div></div>
@@ -949,7 +949,7 @@ VIEWS.corridor=function(m){
   const pos=m.corr.filter(c=>c.ep>=0).reduce((a,c)=>a+c.ep,0);
   const neg=m.corr.filter(c=>c.ep<0).reduce((a,c)=>a+c.ep,0);
   return `
-  <div class="viewhead"><div><div class="kicker">Level 5 · Corridor Intelligence</div>
+  <div class="viewhead"><div><div class="kicker">Where value is made · Corridors</div>
     <h2>Every payment lane, ranked by economic profit</h2>
     <p>${m.corr.length} live corridors. <b style="color:#37d39a">${F.m(pos)} created</b> by the top lanes; <b style="color:#ff5d6c">${F.m(neg)} destroyed</b> by the tail. Click any row to light it up on the map and reprice it.</p></div></div>
   <div class="grid2" style="margin-bottom:14px">
@@ -973,7 +973,7 @@ VIEWS.client=function(m){
       <td class="bar-cell" style="color:${epColor(c.ep)}"><span class="minibar" style="width:${mb}px;background:${epColor(c.ep)};margin-right:7px"></span>${F.signm(c.ep)}</td></tr>`;
   }).join("");
   return `
-  <div class="viewhead"><div><div class="kicker">Level 6 · Client Intelligence</div>
+  <div class="viewhead"><div><div class="kicker">Where value is made · Clients</div>
     <h2>Which relationships create economic profit</h2>
     <p>${m.clients.length} of 592 active relationships shown, clustered by segment and ranked by economic profit — exposing which to <b>grow, reprice or exit</b>.</p></div></div>
   <div class="grid2" style="margin-bottom:14px">
@@ -996,7 +996,7 @@ VIEWS.network=function(m){
     <td style="color:${c[4]>99?'var(--pos)':c[4]>97?'var(--warn)':'var(--neg)'}">${c[4]}%</td>
     <td>${c[5]}h</td><td style="color:${c[6]>1.5?'var(--neg)':'var(--ink2)'}">${c[6]}%</td></tr>`).join("");
   return `
-  <div class="viewhead"><div><div class="kicker">Level 7 · Correspondent Network Twin</div>
+  <div class="viewhead"><div><div class="kicker">Operations · Correspondent network</div>
     <h2>Trace any payment through the network</h2>
     <p>10 core correspondents settle CAB's ${F.bn(BASE.fxVolBn*m.vf)} of flow. Node colour = reliability, link width = volume. The weak links (Ecobank, GTBank, GHIPSS) are where failure rate and settlement time spike.</p></div></div>
   <div class="grid2" style="margin-bottom:14px">
@@ -1031,9 +1031,9 @@ VIEWS.liquidity=function(m){
   }).join("");
   const totBal=NOSTRO.reduce((a,n)=>a+n[1],0), totTrap=NOSTRO.reduce((a,n)=>a+n[2],0);
   return `
-  <div class="viewhead"><div><div class="kicker">Level 8 · Liquidity Twin</div>
-    <h2>Where the bank's money sleeps</h2>
-    <p>${F.m0(totBal)} across 12 nostro currencies, of which <b style="color:#ff5d6c">${F.m0(totTrap)} is trapped</b> (capital controls, settlement buffers, minimum balances). Redeploying it into earning assets lifts net interest income — pull the liquidity lever.</p></div>
+  <div class="viewhead"><div><div class="kicker">Operations · Liquidity &amp; treasury</div>
+    <h2>Liquidity as a cost — and a business</h2>
+    <p><b>${F.m0(totBal)}</b> across 12 nostro currencies, with two sides. Providing liquidity and treasury services to <b>30+ central banks</b> and financial institutions earns the <b>${F.m(BASE.nii)}</b> net-interest / banking line; meanwhile <b style="color:#ff5d6c">${F.m0(totTrap)} sits trapped</b> (capital controls, settlement buffers, minimum balances). Redeploying the trapped side into earning assets lifts income — pull the liquidity lever.</p></div>
     <div style="text-align:right"><div class="scenbadge">released this scenario</div><div class="mono pos" style="font-size:20px">${F.m0(released)}</div></div></div>
   <div class="grid2" style="margin-bottom:14px">
     <div class="card"><div class="ch"><h3>CURRENCY EXPOSURE MAP</h3></div>
@@ -1066,7 +1066,7 @@ VIEWS.ep=function(m){
   const byCcy={}; m.corr.forEach(o=>{byCcy[o.c[2]]=(byCcy[o.c[2]]||0)+o.ep;});
   const ccyArr=Object.entries(byCcy).sort((a,b)=>b[1]-a[1]);
   return `
-  <div class="viewhead"><div><div class="kicker">Level 9 · Economic Profit Engine</div>
+  <div class="viewhead"><div><div class="kicker">The economic engine · Economic profit</div>
     <h2>One formula, applied to everything</h2>
     <p class="mono" style="color:#f5b942">EP = Revenue − Correspondent − Liquidity − Compliance − Operations − Capital×CoE</p>
     <p>The same calculation runs on every transaction, then aggregates by client, corridor, currency, country and correspondent. Group economic profit this scenario: <b style="color:${epColor(m.ep)}">${F.signm(m.ep)}</b>.</p></div></div>
@@ -1092,7 +1092,7 @@ VIEWS.ep=function(m){
 VIEWS.action=function(m){
   const b=baseSnapshot();
   return `
-  <div class="viewhead"><div><div class="kicker">Level 10 · Executive Action Centre</div>
+  <div class="viewhead"><div><div class="kicker">Decisions · Action centre</div>
     <h2>Don't just see it — act on it</h2>
     <p>Each move is modelled end-to-end: revenue, cost, capital, then ROE and shareholder-value impact. Tick to apply; the whole twin re-prices so you can test the combination before you commit.</p></div>
     <div style="text-align:right"><div class="scenbadge">cumulative applied uplift</div><div class="mono" style="font-size:22px;color:${epColor(m.ep-b.ep)}">${F.signm(m.ep-b.ep)} EP</div><div class="scenbadge">ROE <b>${F.signbp((m.roe-b.roe)*10000)}</b> · value <b>${F.signm(m.val.base-b.val.base)}</b></div></div></div>
@@ -1142,17 +1142,37 @@ function actionTable(m,b,compact){
 }
 
 /* ============================================================ RIGHT RAIL (LEVERS + ACTIONS) ============================================================ */
+const RIGHTCTX={
+  cockpit:["The cockpit","The whole bank on one screen — pull a lever and every number re-prices.","FX margin"],
+  market:["Market vs intrinsic","Use the top-bar toggle to switch the Street / Engine lens.","Volume growth"],
+  enterprise:["Value chain","Where value is created and consumed, stage by stage.","Volume growth"],
+  revenue:["Revenue engine","FX is the biggest lever — try the FX margin.","FX margin"],
+  cost:["Cost engine","Compliance automation is the most attackable line.","Compliance automation"],
+  ep:["Economic profit","Group ROE against cost of equity, decomposed every way.","FX margin"],
+  corridor:["Corridors","Click a lane on the map to inspect and reprice it.","FX margin"],
+  client:["Clients","Exit or reprice the value-destroying tail.",""],
+  network:["Correspondent network","Reliability and cost of the settlement rails.",""],
+  liquidity:["Liquidity & treasury","Redeploy trapped balances into earning assets.","Release trapped liquidity"],
+  action:["Action centre","Tick a move — the whole bank re-prices.",""]
+};
 function renderRight(){
   const s=scenario;
+  const ctx=RIGHTCTX[activeView]||RIGHTCTX.cockpit;
   const lever=(id,label,unit,min,max,step,val,fmt)=>`
     <div class="lever"><div class="lh"><span>${label}</span><span class="lv" id="lv-${id}">${fmt(val)}</span></div>
     <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="setLever('${id}',this.value)">
     <div class="lr"><span>${fmt(min)}</span><span>${fmt(max)}</span></div></div>`;
   document.getElementById("right").innerHTML=`
+    <div style="margin-bottom:13px;padding:10px 11px;background:#0c1422;border:1px solid var(--line2);border-radius:9px">
+      <div class="kicker" style="margin:0 0 4px">On this view</div>
+      <div style="font-size:12.5px;font-weight:700;color:#fff">${ctx[0]}</div>
+      <div class="flowtag" style="font-size:10.5px;margin-top:3px;line-height:1.4">${ctx[1]}</div>
+      ${ctx[2]?`<div class="flowtag" style="margin-top:6px">Key lever → <b class="gold">${ctx[2]}</b></div>`:''}
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-      <div class="kicker" style="margin:0">Scenario Studio</div>
+      <div class="kicker" style="margin:0">Global scenario controls</div>
       <span class="btn sm" onclick="resetScenario()">reset</span></div>
-    <div class="flowtag" style="margin-bottom:14px">Pull any lever — the entire bank re-prices live.</div>
+    <div class="flowtag" style="margin-bottom:14px">These levers apply bank-wide, on every view.</div>
     ${lever('fxMarginBps','FX margin','bps',7,15,0.1,s.fxMarginBps,v=>(+v).toFixed(1)+'bps')}
     ${lever('volumeGrowthPct','Volume growth','%',-10,30,1,s.volumeGrowthPct,v=>(v>=0?'+':'')+v+'%')}
     ${lever('rateShiftBps','Rate environment','bps',-200,200,10,s.rateShiftBps,v=>(v>=0?'+':'')+v+'bps')}
@@ -1169,23 +1189,19 @@ function renderRight(){
 }
 
 /* ============================================================ NAV ============================================================ */
-const NAV=[
-  ["cockpit","0","◎ Cockpit"],
-  ["market","1","Market & Investor"],
-  ["enterprise","2","Enterprise Model"],
-  ["revenue","3","Revenue Engine"],
-  ["cost","4","Cost Engine"],
-  ["corridor","5","Corridor Intel"],
-  ["client","6","Client Intel"],
-  ["network","7","Correspondent Twin"],
-  ["liquidity","8","Liquidity Twin"],
-  ["ep","9","Economic Profit"],
-  ["action","10","Action Centre"]
+const NAVGROUPS=[
+  {sec:"", items:[["cockpit","◎ Cockpit"]]},
+  {sec:"Market", items:[["market","How the market sees us"]]},
+  {sec:"The economic engine", items:[["enterprise","Value chain"],["revenue","Revenue engine"],["cost","Cost engine"],["ep","Economic profit"]]},
+  {sec:"Where value is made", items:[["corridor","Corridors"],["client","Clients"]]},
+  {sec:"Operations & optimisation", items:[["network","Correspondent network"],["liquidity","Liquidity & treasury"]]},
+  {sec:"Decisions", items:[["action","Action centre"]]}
 ];
 function renderNav(){
-  document.getElementById("nav").innerHTML=
-    `<div class="navsec">The Bank, End to End</div>`+
-    NAV.map(n=>`<div class="navitem ${activeView===n[0]?'on':''}" onclick="setView('${n[0]}')"><span class="lv">${n[1]}</span><span>${n[2]}</span></div>`).join("");
+  document.getElementById("nav").innerHTML = NAVGROUPS.map(g=>
+    (g.sec?`<div class="navsec">${g.sec}</div>`:`<div style="height:8px"></div>`)+
+    g.items.map(it=>`<div class="navitem ${activeView===it[0]?'on':''}" onclick="setView('${it[0]}')"><span>${it[1]}</span></div>`).join("")
+  ).join("");
 }
 
 /* ============================================================ ASK THE TWIN ============================================================ */
@@ -1300,7 +1316,7 @@ function updateLeverLabel(id){ const el=document.getElementById('lv-'+id); if(!e
 function resetScenario(){ scenario={fxMarginBps:11.2,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); renderRight(); }
 function toggleAction(id){ applied[id]=!applied[id]; if(!applied[id]) delete applied[id]; refresh(); renderRight(); }
 function selectCorridor(i){ selectedCorridor=i; refresh(); }
-function setView(v){ activeView=v; selectedCorridor= v==='cockpit'?selectedCorridor:selectedCorridor; renderNav(); refresh(); document.getElementById('main').scrollTop=0; }
+function setView(v){ activeView=v; renderNav(); renderRight(); refresh(); document.getElementById('main').scrollTop=0; }
 function goAction(){ setView('action'); }
 function genNoteWrap(){}
 function refresh(){
