@@ -208,7 +208,7 @@ const COE = 0.11;               // cost of equity: risk-free ~4% + beta·ERP + f
 const TAXR = 0.125;             // effective tax rate
 const BASE = {
   // FY2025 income lines (£m) — total £119m, consistent with reported income & consensus split
-  fxIncome:47, payments:29, nii:30, trade:9, im:4,
+  fxIncome:49, payments:30, nii:31, trade:9, im:0,
   // operating cost stack (cash opex, £m) — staff is the dominant driver for a people-heavy specialist bank
   staff:42, tech:14, compliance:11, network:8, premises:9,        // = £84m → adj. EBITDA £35m (29.4%)
   // below adj. EBITDA (£m)
@@ -217,7 +217,7 @@ const BASE = {
   equity:150, tangEquity:120, cet1Cap:126.3, rwa:720, totalAssets:1818,
   fxVolBn:41.9, clients:592, currencies:120, pairs:800, countries:190,
   cet1Pct:17.5, totalCapPct:19.4, lcr:182, nsfr:134,
-  baseMarginBps:11.2, rateSensitive:600, trappedM:118,
+  baseMarginBps:11.7, rateSensitive:600, trappedM:118,
   // disclosed network scale
   centralBanks:30, localRels:390, humanitarianBn:13.5,
   // listed parent: CAB Payments Holdings plc (LSE: CABP)
@@ -329,8 +329,66 @@ const SOLUTIONS = [
   ["Relationship Manager Cockpit","loss-making clients","True client economic profit, capital and compliance burden; exit or reprice the tail, grow the core.",0.8,0.3]
 ];
 
+// ---- Strategic outlook: macro of CAB's key markets ----
+const COUNTRIES = [
+  // name, pop(m), gdpGrowth%, mobileMoney%, remitGrowth%, ccyVol(1-5 hi=worse), stability(1-5 hi=better), cabRevM, strategic(0-100)
+  ["Nigeria",223,3.0,45,8,5,2,14.8,78],
+  ["Kenya",55,5.0,80,10,3,4,10.6,90],
+  ["Ghana",34,4.2,62,7,4,3,8.4,74],
+  ["Egypt",112,3.6,30,12,4,3,6.1,70],
+  ["Tanzania",67,5.2,55,9,3,4,4.5,73],
+  ["Uganda",48,5.5,52,8,3,3,3.6,68],
+  ["Ethiopia",126,6.2,25,6,5,2,3.1,65],
+  ["Bangladesh",173,5.8,42,9,3,3,4.0,71],
+  ["Pakistan",240,2.6,36,11,4,2,3.4,60]
+];
+// ---- Technology & disruption: moat threats / opportunities ----
+const TECH = [
+  // name, kind(threat/dual/tailwind), severity(1-5), horizonYrs, revAtRiskM, stance, note
+  ["Stablecoins (USDC / USDT)","dual",5,2,12,"Adopt as a rail","Bypass risk on remittance & treasury corridors — but a settlement opportunity if embraced early."],
+  ["Visa Direct / push-to-card","threat",4,2,8,"Defend & partner","Card rails compete on consumer payout; out-price on FX or integrate as a payout option."],
+  ["Pan-African RTP (PAPSS)","threat",3,3,5,"Engage","Regional real-time rails could disintermediate the correspondent layer."],
+  ["CBDCs / eNaira","dual",3,5,6,"Position early","Central-bank digital currency pilots — CAB's 30+ central-bank relationships are an edge here."],
+  ["Mobile money (M-Pesa / MoMo)","tailwind",2,0,0,"Partner","Last-mile distribution — more channel than competitor."],
+  ["AI compliance & ops automation","tailwind",1,1,0,"Build now","Up to −40% financial-crime effort — the single biggest self-help lever on cost-income."]
+];
+// ---- External intelligence feed ----
+const NEWS = [
+  // when, category, headline, impact(pos/neg/watch)
+  ["Today","Currency","CBN holds policy rate at 27.25%; naira steadies after FX reforms","pos"],
+  ["Today","Disruption","USDC settlement volumes into Africa up ~40% year-on-year","neg"],
+  ["1d","Development","World Bank approves $1.2bn Sahel resilience programme","pos"],
+  ["1d","Currency","Ghana cedi slips ~6% as IMF tranche timing slips","neg"],
+  ["2d","Regulation","UK FCA tightens APP-fraud reimbursement rules","watch"],
+  ["2d","Competitor","Wise posts +25% volume; sharpens emerging-market FX pricing","neg"],
+  ["3d","Infrastructure","Kenya & Ghana extend PAPSS real-time connectivity","watch"],
+  ["4d","Currency","Egypt floats the pound; EGP repriced sharply","watch"],
+  ["5d","Development","USAID restructuring puts some aid disbursements under review","neg"],
+  ["6d","Competitor","StoneX acquires an emerging-markets payments specialist","watch"]
+];
+// ---- Forward (board) scenarios ----
+const FSCEN = [
+  // id, name, desc, dRevM, dCostM, action
+  ["ng30","Nigeria devalues 30%","A sharp naira reset hits NGN-denominated flows; short-term FX volatility lifts trading, medium-term volumes fall.",-4.0,0,"Hedge the NGN nostro, widen spreads into the volatility spike, and accelerate non-NGN West-Africa corridors."],
+  ["stable20","Stablecoins take 20% of remittances","USDC/USDT capture a fifth of consumer remittance flow; payments and FX margin compress, with retention risk on MTO clients.",-8.0,-1.0,"Launch a stablecoin settlement rail; reprice to defend wholesale; lock anchor MTOs onto infrastructure deals."],
+  ["aid25","Aid flows fall 25%","Development-finance disbursements are cut; roughly 12% of revenue is DFI/NGO-linked and partly exposed.",-3.5,-0.5,"Diversify into commercial corridors and deepen central-bank and bank flows to offset the development exposure."],
+  ["ai40","AI cuts compliance effort 40%","Perpetual KYC + ML triage removes manual financial-crime load, with no revenue at risk.",0,-4.4,"Fund the financial-crime platform now — the fastest, highest-certainty route to a lower cost-income ratio."]
+];
+// ---- Operational health (yesterday's engine room) ----
+const OPS = {
+  payments:18420, paymentsValBn:0.17, failedPct:0.9, avgSettleH:6.4, manualPct:11, onboardDays:9, liqUtilPct:78, incidents:2,
+  movers:[["UK→Nigeria (NGN)","+12% volume","pos"],["UAE→Ghana (GHS)","−8% volume","neg"],["Tier-1 MTO — Africa","+£0.3m revenue","pos"],["US→Bangladesh (BDT)","settlement +3h","neg"]]
+};
+// ---- Risk & compliance ----
+const RISK = {
+  amlAlerts:142, amlOpen:23, sanctionsHits:6, kycBacklog:38,
+  countries:[["DR Congo",4.8],["Nigeria",4.6],["Sierra Leone",4.4],["Pakistan",4.2],["Egypt",3.6],["Ghana",3.4],["Kenya",2.6]],
+  issues:[["NGN convertibility & repatriation risk","red"],["Concentration — top-3 corridors = 38% of revenue","amber"],["Correspondent de-risking in 2 West-Africa lanes","amber"],["New UK APP-fraud rules — control uplift required","amber"]]
+};
+
 /* ============================================================ STATE ============================================================ */
-let scenario = {fxMarginBps:11.2, volumeGrowthPct:0, rateShiftBps:0, complianceAutomationPct:0, liquidityReleasePct:0};
+let scenario = {fxMarginBps:11.7, volumeGrowthPct:0, rateShiftBps:0, complianceAutomationPct:0, liquidityReleasePct:0};
+let selectedScenario = null;
 let applied = {};   // action id -> true
 let activeView = "cockpit";
 let valMode = "street";
@@ -391,7 +449,7 @@ function compute(scn, act){
   let rote = netProfit/(B.tangEquity + actCap);
   let capitalCharge = COE*equity;                              // cost of equity × capital employed
   let ep = netProfit - capitalCharge;                          // ≡ (ROE − CoE) × equity
-  let cir = (staff+tech+premises+compliance+network)/income;
+  let cir = (staff+tech+premises+compliance+network+amort+da)/income;
   let ebitdaMargin = ebitda/income;
   // ---- valuation ----
   const mult = valMode==="engine" ? {lo:10,base:12,hi:15} : {lo:4.5,base:5.8,hi:7};
@@ -674,6 +732,13 @@ VIEWS.cockpit=function(m){
     </div>
   </div>
 
+  <div class="grid4" style="margin-bottom:14px">
+    <div class="card" style="cursor:pointer" onclick="setView('ops')"><div class="stat"><div class="lab">Operational health</div><div class="num" style="font-size:18px">${OPS.failedPct}% fail</div><div class="sub">${OPS.payments.toLocaleString()} payments · ${OPS.incidents} incidents</div></div></div>
+    <div class="card" style="cursor:pointer" onclick="setView('risk')"><div class="stat"><div class="lab">Risk & compliance</div><div class="num" style="font-size:18px">${RISK.amlOpen} open</div><div class="sub">${RISK.sanctionsHits} sanctions · 38% concentration</div></div></div>
+    <div class="card" style="cursor:pointer" onclick="setView('strategic')"><div class="stat"><div class="lab">Strategic outlook</div><div class="num pos" style="font-size:18px">Kenya 90</div><div class="sub">top market · is growth where we are?</div></div></div>
+    <div class="card" style="cursor:pointer" onclick="setView('news')"><div class="stat"><div class="lab">The outside world</div><div class="num neg" style="font-size:18px">Stablecoins ↑40%</div><div class="sub">${NEWS.filter(n=>n[3]==='neg').length} headwinds today</div></div></div>
+  </div>
+
   <div class="card">
     <div class="ch"><h3>◆ RECOMMENDED MOVES — RANKED BY ROE IMPACT</h3><span class="meta">click to apply · impact ripples through every screen</span></div>
     ${actionTable(m,b,true)}
@@ -840,15 +905,14 @@ function valueChain(stages,m){
 
 VIEWS.revenue=function(m){
   const lines=[
-    {label:"FX (EMpowerFX)",value:m.fx,color:"#f5b942"},
+    {label:"Wholesale FX (EMpower FX)",value:m.fx,color:"#f5b942"},
     {label:"Payments",value:m.payments,color:"#3fa9ff"},
-    {label:"Net interest / banking",value:m.nii,color:"#34d3c4"},
-    {label:"Trade finance",value:m.trade,color:"#9b7bff"},
-    {label:"Investment mgmt (CAIM)",value:m.im,color:"#9be36a"}
+    {label:"Banking & treasury",value:m.nii,color:"#34d3c4"},
+    {label:"Trade finance & other",value:m.trade,color:"#9b7bff"}
   ];
   const wf=[{label:"FX",value:m.fx,type:"start"},{label:"Payments",value:m.payments,type:"delta"},
-    {label:"Banking/NII",value:m.nii,type:"delta"},{label:"Trade",value:m.trade,type:"delta"},
-    {label:"CAIM",value:m.im,type:"delta"},{label:"Total income",value:m.income,type:"end"}];
+    {label:"Banking",value:m.nii,type:"delta"},{label:"Trade",value:m.trade,type:"delta"},
+    {label:"Total income",value:m.income,type:"end"}];
   const topCorr=[...m.corr].sort((a,b)=>b.rev-a.rev).slice(0,8);
   return `
   <div class="viewhead"><div><div class="kicker">The economic engine · Revenue</div>
@@ -1122,6 +1186,168 @@ VIEWS.action=function(m){
   </div>`;
 };
 
+VIEWS.strategic=function(m){
+  const maxRev=Math.max(...COUNTRIES.map(c=>c[7]));
+  const rows=[...COUNTRIES].sort((a,b)=>b[8]-a[8]).map(c=>`<tr>
+    <td class="l">${c[0]}</td><td>${c[1]}m</td><td>${c[2].toFixed(1)}%</td><td>${c[3]}%</td><td>${c[4]}%</td>
+    <td><span style="color:var(--neg)">${'●'.repeat(c[5])}</span><span class="dim3">${'●'.repeat(5-c[5])}</span></td>
+    <td>${F.m(c[7])}</td>
+    <td class="bar-cell"><span class="minibar" style="width:${c[8]/100*60}px;background:${c[8]>=75?'var(--pos)':c[8]>=65?'var(--gold)':'var(--neg)'};margin-right:7px"></span>${c[8]}</td></tr>`).join("");
+  return `
+  <div class="viewhead"><div><div class="kicker">Where value is made · Strategic outlook</div>
+    <h2>Are we in the fastest-growing markets?</h2>
+    <p>CAB's real product is <b>access</b> — banking relationships, licences, currency reach and compliance in markets others have exited. Footprint: <b>190 countries</b>, <b>120 currencies</b>, <b>30+ central banks</b>, <b>390 local-bank relationships</b>. The question is whether revenue sits where growth actually is.</p></div></div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card hero"><div class="ch"><h3>POSITIONING — MARKET GROWTH vs CAB REVENUE</h3><span class="meta">bubble = strategic score</span></div>
+      ${scatter(COUNTRIES.map(c=>({x:c[2],y:c[4],r:5+c[7]/maxRev*16,label:c[0].slice(0,3).toUpperCase(),color:c[8]>=75?'#37d39a':c[8]>=65?'#f5b942':'#ff5d6c'})),{xlab:'GDP growth %',ylab:'Remittance growth %',h:300,xmin:2})}
+      <div class="flowtag">Top-right = fast-growing economy and remittance flow. Green = high strategic score; red = watch-list. Bubble size is CAB revenue today.</div>
+    </div>
+    <div class="card"><div class="ch"><h3>STRATEGIC SCORE BY MARKET</h3></div>
+      ${hbars([...COUNTRIES].sort((a,b)=>b[8]-a[8]).map(c=>({label:c[0],value:c[8],disp:String(c[8]),color:c[8]>=75?'#37d39a':c[8]>=65?'#f5b942':'#ff5d6c'})),{labelW:90,w:430,rowH:24})}
+      <div class="flowtag">Composite of growth, mobile-money adoption, remittance trend, stability and CAB's position. <b style="color:#37d39a">Kenya (90)</b> and <b>Nigeria (78)</b> anchor; <b style="color:#ff5d6c">Pakistan (60)</b> lags.</div>
+    </div>
+  </div>
+  <div class="card"><div class="ch"><h3>KEY MARKETS — MACRO &amp; CAB POSITION</h3><span class="meta">population · GDP growth · mobile money · remittance growth · currency volatility</span></div>
+    <table><thead><tr><th class="l">Country</th><th>Population</th><th>GDP growth</th><th>Mobile money</th><th>Remit growth</th><th>Ccy volatility</th><th>CAB revenue</th><th>Strategic score</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+};
+
+VIEWS.tech=function(m){
+  const kindColor={threat:'#ff5d6c',dual:'#f5b942',tailwind:'#37d39a'};
+  const totRisk=TECH.reduce((a,t)=>a+(t[4]||0),0);
+  const cards=TECH.map(t=>`<div style="padding:11px 12px;background:#0a121e;border:1px solid var(--line2);border-radius:9px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12px">${t[0]}</b><span class="tag" style="background:${kindColor[t[1]]}22;color:${kindColor[t[1]]}">${t[1]}</span></div>
+    <div class="flowtag" style="margin-top:5px"><span style="color:${kindColor[t[1]]}">${'▰'.repeat(t[2])}</span><span class="dim3">${'▱'.repeat(5-t[2])}</span> · horizon ${t[3]?t[3]+'y':'now'} · ${t[4]?`<b class="neg">£${t[4]}m</b> at risk`:'opportunity'}</div>
+    <div class="flowtag" style="font-size:10px;line-height:1.5;margin-top:5px">${t[6]}</div>
+    <div class="flowtag" style="margin-top:5px">Stance → <b class="gold">${t[5]}</b></div></div>`).join("");
+  return `
+  <div class="viewhead"><div><div class="kicker">The outside world · Technology &amp; disruption</div>
+    <h2>Will technology strengthen our moat — or bypass us?</h2>
+    <p>The structural question for a correspondent-banking franchise. Up to <b class="neg">£${totRisk}m of revenue</b> sits in the path of disruption over five years — but the same forces (stablecoin rails, CBDCs, AI) are opportunities CAB's licences and central-bank relationships are well placed to seize.</p></div></div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card hero"><div class="ch"><h3>THREAT MATRIX — SEVERITY vs HORIZON</h3><span class="meta">bubble = revenue at risk</span></div>
+      ${scatter(TECH.map(t=>({x:t[3],y:t[2],r:6+(t[4]||2),label:t[0].split(' ')[0],color:kindColor[t[1]]})),{xlab:'Horizon — years out',ylab:'Severity (1–5)',h:290,xmin:0})}
+      <div class="legend"><span><span class="sw" style="background:#ff5d6c"></span>threat</span><span><span class="sw" style="background:#f5b942"></span>dual (threat + opportunity)</span><span><span class="sw" style="background:#37d39a"></span>tailwind</span></div>
+    </div>
+    <div class="card"><div class="ch"><h3>REVENUE AT RISK</h3></div>
+      ${hbars(TECH.filter(t=>t[4]).map(t=>({label:t[0].split(' ')[0],value:t[4],disp:'£'+t[4]+'m',color:kindColor[t[1]]})),{labelW:90,w:420,rowH:26})}
+      <div class="flowtag" style="margin-top:6px">Stablecoins are the single biggest exposure — and the clearest "adopt-or-be-bypassed" decision.</div>
+    </div>
+  </div>
+  <div class="card"><div class="ch"><h3>MOAT WATCH — STANCE BY TECHNOLOGY</h3></div><div class="grid3">${cards}</div></div>`;
+};
+
+VIEWS.news=function(m){
+  const dot={pos:'var(--pos)',neg:'var(--neg)',watch:'var(--warn)'};
+  const feed=NEWS.map(n=>`<div style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)">
+    <span style="flex:0 0 8px;height:8px;border-radius:50%;background:${dot[n[3]]};margin-top:4px;box-shadow:0 0 7px ${dot[n[3]]}"></span>
+    <div style="flex:1"><div style="font-size:12px;color:#fff">${n[2]}</div>
+      <div class="flowtag" style="margin-top:2px"><span class="pill">${n[1]}</span> <span class="dim3">${n[0]}</span></div></div>
+    <span class="tag ${n[3]==='pos'?'pos':n[3]==='neg'?'neg':'gold'}">${n[3]==='pos'?'tailwind':n[3]==='neg'?'headwind':'watch'}</span></div>`).join("");
+  const neg=NEWS.filter(n=>n[3]==='neg').length, pos=NEWS.filter(n=>n[3]==='pos').length;
+  return `
+  <div class="viewhead"><div><div class="kicker">The outside world · News &amp; intelligence</div>
+    <h2>What happened today that could move tomorrow</h2>
+    <p>A live read on the forces around the bank — central banks, currencies, development finance, competitors and disruption. Net this week: <b class="pos">${pos} tailwinds</b>, <b class="neg">${neg} headwinds</b>.</p></div></div>
+  <div class="grid2">
+    <div class="card"><div class="ch"><h3>INTELLIGENCE FEED</h3><span class="meta">curated · would auto-populate from live sources</span></div>${feed}</div>
+    <div>
+      <div class="card" style="margin-bottom:14px"><div class="ch"><h3>WHAT IT MEANS FOR US</h3></div>
+        <div class="note">The standout signal is <b style="color:#ff5d6c">stablecoin volumes into Africa up ~40%</b> — the structural threat to remittance economics — set against <b style="color:#37d39a">naira stability</b> easing NGN-corridor risk. Aid-flow uncertainty touches ~12% of revenue. Any of these can be stress-tested live.</div>
+        <button class="btn gold sm" style="margin-top:12px" onclick="setView('fscenario')">→ Stress-test in the scenario engine</button></div>
+      <div class="card"><div class="ch"><h3>SIGNALS BY CATEGORY</h3></div>
+        ${hbars(Object.entries(NEWS.reduce((a,n)=>{a[n[1]]=(a[n[1]]||0)+1;return a;},{})).map(e=>({label:e[0],value:e[1],disp:String(e[1]),color:'#3fa9ff'})),{labelW:110,w:380,rowH:22})}</div>
+    </div>
+  </div>`;
+};
+
+function applyScenario(id){ selectedScenario = (selectedScenario===id?null:id); refresh(); }
+VIEWS.fscenario=function(m){
+  const b=baseSnapshot();
+  const cards=FSCEN.map(s=>{
+    const on=selectedScenario===s[0];
+    return `<div class="card" style="cursor:pointer;${on?'border-color:var(--gold)':''}" onclick="applyScenario('${s[0]}')">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12.5px">${s[1]}</b>${on?'<span class="tag gold">SELECTED</span>':'<span class="btn sm">run</span>'}</div>
+      <div class="flowtag" style="font-size:10.5px;line-height:1.5;margin-top:6px">${s[2]}</div></div>`;
+  }).join("");
+  let impact='<div class="card" style="margin-top:14px"><div class="note dim">Select a scenario above to model its impact on the bank.</div></div>';
+  if(selectedScenario){
+    const s=FSCEN.find(x=>x[0]===selectedScenario);
+    const inc=b.income+s[3], cashOpex=b.cashOpex+s[4], eb=inc-cashOpex;
+    const pbt=eb-b.amort-b.da-b.adjusting, net=pbt-Math.max(0,pbt)*TAXR;
+    const roe=net/b.equity, ep=net-COE*b.equity, cir=(cashOpex+b.amort+b.da)/inc, val=eb*5.8;
+    const row=(lab,base,now,fmt,good)=>{const d=now-base;const cls=Math.abs(d)<0.0005?'dim3':((d*good)>=0?'pos':'neg');return `<tr><td class="l">${lab}</td><td>${fmt(base)}</td><td style="color:#fff">${fmt(now)}</td><td class="${cls}">${d>=0?'+':'−'}${fmt(Math.abs(d))}</td></tr>`;};
+    impact=`<div class="card" style="margin-top:14px"><div class="ch"><h3>IMPACT — ${s[1].toUpperCase()}</h3><span class="tag ${(net-b.netProfit)>=0?'pos':'neg'}">${F.signm(net-b.netProfit)} net profit</span></div>
+      <div class="grid2">
+        <table><thead><tr><th class="l">Metric</th><th>Base</th><th>Scenario</th><th>Δ</th></tr></thead><tbody>
+          ${row('Revenue',b.income,inc,F.m0,1)}
+          ${row('Adj. EBITDA',b.ebitda,eb,F.m0,1)}
+          ${row('Cost / income',b.cir,cir,F.pct,-1)}
+          ${row('ROE',b.roe,roe,F.pct,1)}
+          ${row('Economic profit',b.ep,ep,F.m,1)}
+          ${row('Market value',b.ebitda*5.8,val,F.m0,1)}
+        </tbody></table>
+        <div><div class="note"><b>What's happening.</b> ${s[2]}</div><div class="divider"></div>
+          <div class="note"><b style="color:#f5b942">What management should do.</b> ${s[5]}</div></div>
+      </div></div>`;
+  }
+  return `
+  <div class="viewhead"><div><div class="kicker">Decisions · Scenario engine</div>
+    <h2>The biggest opportunities and threats — next five years</h2>
+    <p>Board-level shocks, run through the same economic engine. Pick one to see the hit to revenue, EBITDA, ROE and value — and the recommended response.</p></div></div>
+  <div class="grid4">${cards}</div>
+  ${impact}`;
+};
+
+VIEWS.ops=function(m){
+  const dayRev=m.income/250;
+  const kpi=(lab,val,sub,col)=>`<div class="card"><div class="stat"><div class="lab">${lab}</div><div class="num" style="font-size:21px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div></div>`;
+  return `
+  <div class="viewhead"><div><div class="kicker">Operations · Operational health</div>
+    <h2>Is the machine running efficiently today?</h2>
+    <p>Yesterday's engine room. <b>${OPS.payments.toLocaleString()}</b> payments worth <b>${F.bn(OPS.paymentsValBn)}</b> processed, <b>${OPS.failedPct}%</b> failed, <b>${OPS.incidents}</b> operational incidents.</p></div>
+    <div style="text-align:right"><div class="scenbadge">yesterday's revenue</div><div class="mono" style="font-size:20px">${F.m(dayRev)}</div></div></div>
+  <div class="grid4" style="margin-bottom:14px">
+    ${kpi('Payments processed',OPS.payments.toLocaleString(),F.bn(OPS.paymentsValBn)+' value')}
+    ${kpi('Failed payments',OPS.failedPct+'%',OPS.failedPct<1?'within tolerance':'above tolerance',OPS.failedPct<1?'var(--pos)':'var(--neg)')}
+    ${kpi('Avg settlement',OPS.avgSettleH+'h','across corridors')}
+    ${kpi('Manual interventions',OPS.manualPct+'%','of payments touched',OPS.manualPct>10?'var(--warn)':'var(--ink)')}
+  </div>
+  <div class="grid4" style="margin-bottom:14px">
+    ${kpi('Onboarding time',OPS.onboardDays+'d','median KYC to live',OPS.onboardDays>7?'var(--warn)':'var(--pos)')}
+    ${kpi('Liquidity utilisation',OPS.liqUtilPct+'%','of available nostro')}
+    ${kpi('Incidents (24h)',String(OPS.incidents),OPS.incidents>0?'under review':'all clear',OPS.incidents>0?'var(--warn)':'var(--pos)')}
+    ${kpi('Compliance queue',RISK.amlOpen+' open',RISK.amlAlerts+' alerts/24h',RISK.amlOpen>20?'var(--warn)':'var(--ink)')}
+  </div>
+  <div class="card"><div class="ch"><h3>LARGEST MOVES — YESTERDAY</h3></div>
+    ${OPS.movers.map(mv=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>${mv[0]}</span><b class="${mv[2]==='pos'?'pos':'neg'} mono">${mv[1]}</b></div>`).join('')}
+  </div>`;
+};
+
+VIEWS.risk=function(m){
+  const kpi=(lab,val,sub,col)=>`<div class="card"><div class="stat"><div class="lab">${lab}</div><div class="num" style="font-size:21px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div></div>`;
+  const icol={red:'var(--neg)',amber:'var(--warn)'};
+  return `
+  <div class="viewhead"><div><div class="kicker">Operations · Risk &amp; compliance</div>
+    <h2>Where could risk suddenly damage profit or reputation?</h2>
+    <p>CAB's edge is operating where others won't — which concentrates financial-crime, currency and concentration risk. The discipline is seeing it before it bites.</p></div></div>
+  <div class="grid4" style="margin-bottom:14px">
+    ${kpi('AML alerts / 24h',String(RISK.amlAlerts),RISK.amlOpen+' open investigations',RISK.amlOpen>20?'var(--warn)':'var(--ink)')}
+    ${kpi('Sanctions hits',String(RISK.sanctionsHits),'pending review',RISK.sanctionsHits>3?'var(--warn)':'var(--ink)')}
+    ${kpi('KYC backlog',RISK.kycBacklog+' cases','onboarding & refresh')}
+    ${kpi('Concentration','38%','top-3 corridors of revenue','var(--warn)')}
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ch"><h3>COUNTRY RISK</h3><span class="meta">composite · 5 = highest</span></div>
+      ${hbars(RISK.countries.map(c=>({label:c[0],value:c[1],disp:c[1].toFixed(1),color:c[1]>=4.5?'#ff5d6c':c[1]>=3.5?'#ffb13d':'#37d39a'})),{labelW:100,w:420,rowH:24})}
+    </div>
+    <div class="card"><div class="ch"><h3>EMERGING ISSUES</h3></div>
+      ${RISK.issues.map(i=>`<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)"><span style="flex:0 0 8px;height:8px;border-radius:50%;background:${icol[i[1]]};margin-top:4px"></span><span style="flex:1;font-size:11.5px">${i[0]}</span><span class="tag ${i[1]==='red'?'neg':'gold'}">${i[1]==='red'?'high':'medium'}</span></div>`).join('')}
+      <div class="flowtag" style="margin-top:10px">The highest-risk markets (DR Congo, Nigeria, Sierra Leone) are also among the most profitable — the risk-return trade-off this bank is built to manage.</div>
+    </div>
+  </div>`;
+};
+
 function actionTable(m,b,compact){
   return `<table><thead><tr><th></th><th class="l">Action</th>${compact?'':'<th class="l">Detail</th>'}<th>Revenue Δ</th><th>Cost Δ</th><th>Profit Δ</th><th>ROE Δ</th><th>Value Δ</th><th></th></tr></thead><tbody>${
     ACTIONS.map(a=>{
@@ -1153,6 +1379,12 @@ const RIGHTCTX={
   client:["Clients","Exit or reprice the value-destroying tail.",""],
   network:["Correspondent network","Reliability and cost of the settlement rails.",""],
   liquidity:["Liquidity & treasury","Redeploy trapped balances into earning assets.","Release trapped liquidity"],
+  strategic:["Strategic outlook","Where growth is — and whether CAB is positioned for it.",""],
+  ops:["Operational health","Yesterday's engine room.",""],
+  risk:["Risk & compliance","Where risk could suddenly bite.",""],
+  tech:["Technology & disruption","Threats and tailwinds to the moat.",""],
+  news:["News & intelligence","External signals that move revenue, risk and liquidity.",""],
+  fscenario:["Scenario engine","Run a board-level shock through the bank.",""],
   action:["Action centre","Tick a move — the whole bank re-prices.",""]
 };
 function renderRight(){
@@ -1193,9 +1425,10 @@ const NAVGROUPS=[
   {sec:"", items:[["cockpit","◎ Cockpit"]]},
   {sec:"Market", items:[["market","How the market sees us"]]},
   {sec:"The economic engine", items:[["enterprise","Value chain"],["revenue","Revenue engine"],["cost","Cost engine"],["ep","Economic profit"]]},
-  {sec:"Where value is made", items:[["corridor","Corridors"],["client","Clients"]]},
-  {sec:"Operations & optimisation", items:[["network","Correspondent network"],["liquidity","Liquidity & treasury"]]},
-  {sec:"Decisions", items:[["action","Action centre"]]}
+  {sec:"Where value is made", items:[["corridor","Corridors"],["client","Clients"],["strategic","Strategic outlook"]]},
+  {sec:"Operations & risk", items:[["network","Correspondent network"],["liquidity","Liquidity & treasury"],["ops","Operational health"],["risk","Risk & compliance"]]},
+  {sec:"The outside world", items:[["tech","Technology & disruption"],["news","News & intelligence"]]},
+  {sec:"Decisions", items:[["action","Action centre"],["fscenario","Scenario engine"]]}
 ];
 function renderNav(){
   document.getElementById("nav").innerHTML = NAVGROUPS.map(g=>
@@ -1313,7 +1546,7 @@ function setLever(id,val){ scenario[id]=parseFloat(val); updateLeverLabel(id); r
 function updateLeverLabel(id){ const el=document.getElementById('lv-'+id); if(!el)return; const v=scenario[id];
   const f={fxMarginBps:x=>x.toFixed(1)+'bps',volumeGrowthPct:x=>(x>=0?'+':'')+x+'%',rateShiftBps:x=>(x>=0?'+':'')+x+'bps',complianceAutomationPct:x=>x+'%',liquidityReleasePct:x=>x+'%'};
   el.textContent=(f[id]||String)(v); }
-function resetScenario(){ scenario={fxMarginBps:11.2,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); renderRight(); }
+function resetScenario(){ scenario={fxMarginBps:11.7,volumeGrowthPct:0,rateShiftBps:0,complianceAutomationPct:0,liquidityReleasePct:0}; applied={}; selectedCorridor=null; refresh(); renderRight(); }
 function toggleAction(id){ applied[id]=!applied[id]; if(!applied[id]) delete applied[id]; refresh(); renderRight(); }
 function selectCorridor(i){ selectedCorridor=i; refresh(); }
 function setView(v){ activeView=v; renderNav(); renderRight(); refresh(); document.getElementById('main').scrollTop=0; }
