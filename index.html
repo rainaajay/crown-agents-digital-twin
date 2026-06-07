@@ -1565,7 +1565,7 @@ function genNote(){
     </div>
     <div class="note" style="font-size:11.5px;line-height:1.65">
       <b>Investment case.</b> A specialist emerging-markets payments and FX franchise with near-200-year heritage and a network few can replicate — 120 currencies, 800 pairs, 190 countries, and 30+ central-bank and 390 local-bank relationships. After a difficult 2024 reset, FY25 delivered <b>income of £119m (+12%)</b>, <b>adjusted EBITDA of £35m (29.8% margin)</b> and <b>adjusted EPS of 6.8p</b> — <b>ahead of consensus on every line</b>. Wholesale and payment-FX volumes reached <b>£41.9bn (+13%)</b>.<br><br>
-      <b>What the market is missing.</b> CABP trades at <b>~5.8× EBITDA (£${BASE.mktCap}m)</b> — a distressed multiple set by the 2023 profit warning — while specialist payments peers carry 10–20×. On a 12× peer multiple the franchise supports <b>${F.m0(m.ebitda*12)}</b> (≈${Math.round((m.ebitda*12)/BASE.shares*100)}p/share). The recovery is in the numbers; it is not yet in the rating.<br><br>
+      <b>What the market is missing.</b> The brokers are cautious — consensus ~${BASE.consTarget}p, Barclays ${BASE.barclaysRating} at ${BASE.barclaysPT}p — yet CABP trades at <b>~6× EBITDA (£${BASE.mktCap}m)</b>, cheaper than even shrinking Western Union while Wise carries ~14×. The FX take rate has already rebounded to 0.18% in H2 and fintech & corporate income rose 66% half-on-half. On a 12× peer multiple the franchise supports <b>${F.m0(m.ebitda*12)}</b> (≈${Math.round((m.ebitda*12)/BASE.shares*100)}p/share) — the recovery is in the numbers, not yet in the rating.<br><br>
       <b>Economic profit.</b> Group ROE of <b>${F.pct(m.roe)}</b> sits around an estimated <b>${F.pct0(COE)}</b> cost of equity — economic profit of roughly <b>${F.m(m.ep)}</b>, with wide dispersion. A long tail of frontier corridors (secondary NGN, GHS, CDF, SLE) and sub-scale MTOs runs <b>negative EP</b>, masking the strength of the core.<br><br>
       <b>Catalysts.</b> (i) repricing the value-destroying tail; (ii) automating financial-crime operations (−£4.4m cost); (iii) redeploying ~£118m of trapped nostro liquidity; (iv) anchoring new development-finance mandates. Execution lifts ROE toward <b>~${F.pct(b.roe+0.038)}</b> and supports a re-rating.<br><br>
       <b>Risks.</b> Frontier-currency convertibility (NGN/GHS), correspondent de-risking, sanctions exposure on high-risk corridors, and net-interest sensitivity to the rate cycle.
@@ -1580,7 +1580,7 @@ function genBoard(){
   <div style="border:1px solid var(--line2);border-radius:9px;padding:16px;background:#0a0f18">
     <b style="font-size:14px">Board narrative — FY2025</b><div class="dim3" style="font-size:10px;margin-bottom:10px">GENERATED LIVE</div>
     <div class="note" style="font-size:11.5px;line-height:1.65">
-      <b>1. We out-performed the market's model of us.</b> Income £119m, adjusted EBITDA £35m, EPS 6.8p — ahead of consensus on every line, with banking income £5.7m above where the analysts had it. The story is being told too conservatively.<br><br>
+      <b>1. We out-performed the market's model of us.</b> Income £119m, adjusted EBITDA £35m, EPS 6.8p — a clear return to growth, with the FX take rate recovering to 0.18% in H2 and fintech income up 66% half-on-half. The story is being told too conservatively — the brokers still sit cautious.<br><br>
       <b>2. We create economic value — but unevenly.</b> Group economic profit is <b>${F.m(m.ep)}</b> over the cost of equity. Yet <b>${neg.length} corridors and ${m.clients.filter(c=>c.ep<0).length} relationships destroy value</b>. The core is stronger than the headline; the tail is dragging it.<br><br>
       <b>3. Three moves change the trajectory.</b> Automate financial crime (−£4.4m, no revenue at risk). Reprice the frontier tail (+£2.4m). Redeploy £118m of trapped liquidity. Together: ROE from <b>${F.pct(b.roe)}</b> toward <b>${F.pct(b.roe+0.038)}</b>.<br><br>
       <b>4. This is where the share price re-rates.</b> The market values us at ~5.8× EBITDA (£${BASE.mktCap}m, from £851m at IPO); peers trade at 10–15×. Every basis point of ROE we add — and every point of dispersion we remove — narrows that gap.<br><br>
@@ -1642,6 +1642,11 @@ VIEWS.overview=function(m){
       <table><thead><tr><th class="l">Company</th><th>Rev growth</th><th>EBITDA mgn</th><th>EV/EBITDA</th></tr></thead><tbody>${PEERS.map(p=>{const c=p[0].includes('CABP');return `<tr ${c?'style="background:rgba(245,185,66,.08)"':''}><td class="l" ${c?'style="color:#f5b942;font-weight:700"':''}>${p[0]}</td><td>${p[2]>=0?'+':''}${p[2]}%</td><td>${p[3]?p[3]+'%':'—'}</td><td>${p[4]?p[4].toFixed(1)+'×':'—'}</td></tr>`;}).join('')}</tbody></table>
       <div>${scatter(PEERS.filter(p=>p[3]).map(p=>({x:p[2],y:p[3],r:p[0].includes('CABP')?10:7,label:p[0].split(' ')[0],color:p[0].includes('CABP')?'#f5b942':'#3fa9ff'})),{xlab:'Revenue growth %',ylab:'EBITDA margin %',h:240})}</div>
     </div>
+  </div>
+  <div class="card"><div class="ch"><h3>◆ ONE-CLICK ANALYST NOTE</h3><span class="meta">generated live from the model · for the board pack</span></div>
+    <button class="btn gold" onclick="genNote()">▶ Generate equity research note</button>
+    <button class="btn" style="margin-left:8px" onclick="genBoard()">▶ Generate board narrative</button>
+    <div id="noteout" style="margin-top:14px"></div>
   </div>`;
 };
 
@@ -1676,6 +1681,15 @@ VIEWS.revenue=function(m){
         <div class="stat"><div class="lab">Active clients</div><div class="num" style="font-size:20px">592</div><div class="sub">from 546</div></div>
       </div>
       <div class="flowtag" style="margin-top:10px">Revenue is volume × take rate × mix. Each 1bp of take rate on £41.9bn is roughly £4m. Management guides income (ex-interest) to compound in the high-teens to low-20s % a year over three years — pricing discipline and mix matter as much as new volume.</div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>CORRIDOR LEAGUE — BY ECONOMIC PROFIT</h3><span class="meta">click a lane to light it up on the map</span></div>
+      <table><thead><tr><th class="l">Corridor</th><th>Revenue</th><th>Margin</th><th>Econ. profit</th></tr></thead><tbody>${[...m.corr].sort((a,b)=>b.ep-a.ep).map(o=>{const idx=m.corr.indexOf(o);return `<tr class="clk" onclick="selectCorridor(${idx})"><td class="l"><span class="tag blue" style="margin-right:5px">${o.c[2]}</span>${o.c[0]}→${o.c[1]}</td><td>${F.m(o.rev)}</td><td>${(o.rev/(o.c[5]*m.vf*1000)*10000).toFixed(0)}bps</td><td style="color:${epColor(o.ep)}">${F.signm(o.ep)}</td></tr>`;}).join('')}</tbody></table>
+    </div>
+    <div class="card"><div class="ch"><h3>ECONOMIC PROFIT BY CURRENCY</h3></div>
+      ${(()=>{const byCcy={};m.corr.forEach(o=>byCcy[o.c[2]]=(byCcy[o.c[2]]||0)+o.ep);return hbars(Object.entries(byCcy).sort((a,b)=>b[1]-a[1]).map(e=>({label:e[0],value:e[1],disp:F.signm(e[1])})),{diverging:true,w:430,rowH:23,labelW:54});})()}
+      <div class="flowtag" style="margin-top:6px">NGN and KES are the economic engines; CDF, SLE and ZMW destroy value — reprice or exit.</div>
     </div>
   </div>
   <div class="card"><div class="ch"><h3>WHAT MOVES REVENUE</h3><span class="meta">short term &amp; long term</span></div>
@@ -1786,9 +1800,19 @@ VIEWS.strategy=function(m){
     <div class="card"><div class="ch"><h3>WHAT WE CAN DO — TICK TO MODEL</h3><span class="meta">impact ripples through every tab</span></div>
       ${ACTIONS.map(a=>{const one=compute(scenario,{[a[0]]:true});const d=(one.roe-b.roe)*10000;const on=!!applied[a[0]];return `<div class="actpick" onclick="toggleAction('${a[0]}')"><div class="chk ${on?'on':''}">${on?'✓':''}</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:#fff">${a[1]}</div><div class="flowtag" style="font-size:10px">${a[2]}</div></div><div class="mono" style="color:${d>=0?'var(--pos)':'var(--neg)'};font-size:12px">${F.signbp(d)} ROE</div></div>`;}).join('')}
       ${Object.keys(applied).length?`<div style="text-align:right;margin-top:10px"><span class="btn sm" onclick="resetScenario()">reset</span></div>`:''}</div>
-    <div class="card"><div class="ch"><h3>MACRO SCENARIOS — GOOD &amp; BAD</h3><span class="meta">5-year shocks → ROE</span></div>
-      ${hbars(scen.map(x=>({label:x.s[1].length>26?x.s[1].slice(0,24)+'…':x.s[1],value:x.roeD,disp:F.signbp(x.roeD*100),color:x.roeD>=0?'#37d39a':'#ff5d6c'})),{diverging:true,w:520,rowH:26,labelW:175})}
-      <div class="flowtag" style="margin-top:6px">AI / compliance automation is the big upside; stablecoin disruption and a Nigeria devaluation are the big downside risks.</div></div>
+    <div class="card"><div class="ch"><h3>MACRO SCENARIOS — WHAT IF…</h3><span class="meta">click a 5-year shock to model it</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${FSCEN.map(s=>`<button class="btn sm ${selectedScenario===s[0]?'gold':''}" onclick="applyScenario('${s[0]}')">${s[1]}</button>`).join('')}</div>
+      ${selectedScenario?(()=>{
+        const s=FSCEN.find(x=>x[0]===selectedScenario);
+        const inc=b.income+s[3], cashOpex=b.cashOpex+s[4], eb=inc-cashOpex;
+        const pbt=eb-b.amort-b.da-b.adjusting, net=pbt-Math.max(0,pbt)*TAXR;
+        const roe=net/b.equity, cir=(cashOpex+b.amort+b.da)/inc, val=eb*12;
+        const row=(lab,base,now,fmt,good)=>{const d=now-base;const cls=Math.abs(d)<0.0005?'dim3':((d*good)>=0?'pos':'neg');return `<tr><td class="l">${lab}</td><td>${fmt(base)}</td><td style="color:#fff">${fmt(now)}</td><td class="${cls}">${d>=0?'+':'−'}${fmt(Math.abs(d))}</td></tr>`;};
+        return `<div class="grid2"><table><thead><tr><th class="l">Metric</th><th>Base</th><th>Scenario</th><th>Δ</th></tr></thead><tbody>
+          ${row('Revenue',b.income,inc,F.m0,1)}${row('Adj. EBITDA',b.ebitda,eb,F.m0,1)}${row('Cost / income',b.cir,cir,F.pct,-1)}${row('ROE',b.roe,roe,F.pct,1)}${row('Intrinsic value (12×)',b.ebitda*12,val,F.m0,1)}
+        </tbody></table>
+        <div><div class="note">${s[2]}</div><div class="divider"></div><div class="note"><b style="color:#f5b942">What management should do.</b> ${s[5]}</div></div></div>`;
+      })():`${hbars(scen.map(x=>({label:x.s[1].length>26?x.s[1].slice(0,24)+'…':x.s[1],value:x.roeD,disp:F.signbp(x.roeD*100),color:x.roeD>=0?'#37d39a':'#ff5d6c'})),{diverging:true,w:520,rowH:26,labelW:175})}<div class="flowtag" style="margin-top:6px">Click a scenario for the full impact. AI / compliance automation is the big upside; stablecoin disruption and a Nigeria devaluation are the big downside risks.</div>`}</div>
   </div>`;
 };
 
