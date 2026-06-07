@@ -305,7 +305,7 @@ const PEERS = [
   ["Convera","Private · est.",8,18,10,null],
   ["Western Union","Listed payments",-3,24,6,6],
   ["Standard Chartered","Listed bank",6,null,7,8],
-  ["CAB Payments (CABP)","Listed · LSE",12,29.8,5.8,12]
+  ["CAB Payments (CABP)","Listed · LSE",12,29.8,6.0,12]
 ];
 
 // consensus vs actual reconciliation (the gap)
@@ -657,7 +657,7 @@ function renderKPIs(m){
     {k:"Adj. EBITDA",v:F.m0(m.ebitda),d:m.ebitda-b.ebitda,df:F.signm,good:1},
     {k:"Total Income",v:F.m0(m.income),d:m.income-b.income,df:F.signm,good:1},
     {k:"Cost / Income",v:F.pct(m.cir),d:m.cir-b.cir,df:x=>F.signbp(x*10000),good:-1},
-    {k:"Intrinsic value (12×)",v:F.m0(m.ebitda*12),d:(m.ebitda-b.ebitda)*12,df:F.signm,good:1}
+    {k:"Implied value (10×)",v:F.m0(m.ebitda*10),d:(m.ebitda-b.ebitda)*10,df:F.signm,good:1}
   ];
   document.getElementById("kpis").innerHTML = items.map(it=>{
     const ch=Math.abs(it.d)>0.0001;
@@ -672,7 +672,7 @@ function renderKPIs(m){
 const CLIENT_SEGMENTS = [
   ["Commercial & regional banks",48,"up","Large global banks (several top-20) needing frontier-currency liquidity and the last-mile settlement they have de-risked away from, plus local and regional banks in Africa, the Caribbean and S/SE Asia needing hard-currency clearing and access to global rails.","Visa (FX liquidity for bank-to-bank settlement); several top-20 global banks (unnamed); many regional African, Caribbean and Asian banks.","A specialist correspondent giving access to 120+ currencies, 800+ pairs and ~390 local-bank relationships in markets where global correspondents have withdrawn.","The anchor segment. Further de-risking by global banks sends more flow to CAB; falling rates compress the net-interest part of the relationship."],
   ["Central banks & sovereigns",12,"flat","30+ central banks and monetary authorities in frontier and emerging markets, plus finance ministries and sovereign treasuries — rooted in the 200-year Crown Agents heritage.","30+ central-bank counterparties (unnamed); recognised at the 2025 Central Banking Awards.","Reserve management, reliable hard-currency FX, settlement assurance and global-market access via a trusted, UK-regulated counterparty.","Sticky and reputationally valuable, but exposed to sovereign and FX-reserve stress and sanctions. Central-bank digital currencies are the key watch item — CAB is exploring central-bank-backed stablecoins."],
-  ["Fintechs & money-transfer operators",20,"up","Digital cross-border payment firms, remittance fintechs and MTOs needing wholesale FX and payout into hard-to-reach corridors (mobile money, local bank, cash).","MFS Africa / Onafriq (pan-African mobile-money payout); Cambridge Global Payments / Corpay for Asia and Africa; the Visa Direct partnership reaching wallets and cards in 190+ countries.","CAB is the wholesale bridge into emerging markets — FX, settlement and last-mile delivery, so fintechs can offer corridors they could not build alone.","The principal growth engine (+66% half-on-half in H2 2025, FX volumes +52%) — but margin-compressing as fintechs scale, with disintermediation risk if large MTOs build their own central-bank rails."],
+  ["Fintechs & money-transfer operators",18,"up","Digital cross-border payment firms, remittance fintechs and MTOs needing wholesale FX and payout into hard-to-reach corridors (mobile money, local bank, cash).","MFS Africa / Onafriq (pan-African mobile-money payout); Cambridge Global Payments / Corpay for Asia and Africa; the Visa Direct partnership reaching wallets and cards in 190+ countries.","CAB is the wholesale bridge into emerging markets — FX, settlement and last-mile delivery, so fintechs can offer corridors they could not build alone.","The principal growth engine (+66% half-on-half in H2 2025, FX volumes +52%) — but margin-compressing as fintechs scale, with disintermediation risk if large MTOs build their own central-bank rails."],
   ["Corporates & commodity traders",8,"up","Multinational corporates and commodity traders operating across frontier markets, needing cross-border payments, FX hedging and trade finance where mainstream banks have exited.","Not individually named — commercial enterprises and commodity-trade flows across Africa, the Caribbean and S/SE Asia.","Reliable, fast, cost-effective payments, frontier FX and trade finance, with local-currency access and settlement certainty.","Tied to frontier trade and commodity cycles; growing through geographic expansion (the Americas are already ~35% of flows, plus the new New York and Abu Dhabi offices)."],
   ["Pension & payroll administrators",2,"up","Pension funds, administrators and payroll providers making recurring cross-border pension and salary payments to beneficiaries in emerging markets.","Administrators on the EMpower Pensions platform (biometric proof-of-life plus international pension payroll).","Specialist cross-border pensions and payroll, with FX, last-mile delivery and proof-of-life fraud control.","A sticky, recurring-revenue niche; upside from digitising cross-border pensions and bundling with government and employer payroll."],
   ["International development organisations",12,"down","Multilaterals, donor governments, UN agencies, NGOs and foundations moving aid and programme funding into low-income and fragile markets — bulk transfers plus many small last-mile payments.","Not named by CAB; the aid ecosystem (FCDO, Gavi, USAID, SIDA programmes) sits alongside the separate Crown Agents consultancy.","Fast, predictable, traceable disbursement into markets with limited infrastructure, with FX and compliance handled.","The most at-risk segment (£13.9m, −9%): USAID closed in July 2025 and FCDO cut aid from 0.5% to 0.3% of GNI — partly cushioned by aid localisation (more last-mile payments)."]
@@ -721,7 +721,7 @@ const KPITIPS={
   "Adj. EBITDA":"Operating profit before interest, tax, depreciation and amortisation.",
   "Total Income":"FX + payments + banking income for the year.",
   "Cost / Income":"Share of income eaten by running costs. Lower is better.",
-  "Intrinsic value (12×)":"What the business is worth on a payments-peer multiple of ~12x EBITDA."
+  "Implied value (10×)":"Illustrative re-rating value at ~10x EBITDA (between Western Union's ~6x and Wise's ~14x) — not a precise equity valuation."
 };
 const PROVENANCE=`<div style="margin-top:14px;padding:8px 2px"><div class="fnote" style="border:0;color:var(--ink3)"><b style="color:var(--ink2)">About the data.</b> <span class="pos">Public</span> (filings / market data): financials, segment splits, take rate, peers, share price, takeover and macro facts come from CAB Payments / Crown Agents Bank disclosures, LSE data and news. <span style="color:#3fa9ff">Modelled</span>: economic profit, cost of equity and valuation multiples are derived from those figures. <span style="color:#ffb13d">Illustrative</span>: the corridor, currency and nostro line items are realistic placeholders shaped to CAB's footprint — swap in the bank's ledgers and they become exact. Not investment advice.</div></div>`;
 /* ============================================================ VIEWS ============================================================ */
@@ -893,7 +893,7 @@ VIEWS.market=function(m){
 
 function valuationTree(m){
   const W=560,H=250, ebd=m.ebitda;
-  const street=BASE.mktCap, bid=BASE.stoneXVal, engine=ebd*12, max=engine*1.08;
+  const street=BASE.mktCap, bid=BASE.stoneXVal, engine=ebd*10, max=engine*1.08;
   const bar=(label,val,yy,col,sub)=>{const w=(W-160)*(val/max);return `
     <text x="148" y="${yy+15}" text-anchor="end" style="fill:var(--ink);font-size:10.5px">${label}</text>
     <rect x="156" y="${yy}" width="${Math.max(w,2)}" height="30" rx="5" fill="${col}" opacity="0.85"/>
@@ -902,7 +902,7 @@ function valuationTree(m){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%">
     ${bar('Street (CABP)',street,28,'#3fa9ff',(street/ebd).toFixed(1)+'× · ~'+BASE.sharePence+'p')}
     ${bar('StoneX bid',bid,78,'#f5b942',(bid/ebd).toFixed(1)+'× · 110p — Helios called it too low')}
-    ${bar('Intrinsic · engine',engine,128,'#37d39a','12× · payments-peer re-rating')}
+    ${bar('Re-rating (10×)',engine,128,'#37d39a','illustrative · between WU 6× and Wise 14×')}
     <text x="156" y="190" style="fill:var(--ink2);font-size:10px">An acquirer offered <tspan style="fill:#f5b942">£${bid}m</tspan>; the ${BASE.heliosStake}% owner held out for more; a full peer re-rating implies <tspan style="fill:#37d39a">£${engine.toFixed(0)}m</tspan>.</text>
     <text x="156" y="208" style="fill:var(--ink3);font-size:9px">IPO Jul-2023: 335p = £851m. Move EBITDA on the levers and the bars retrace live.</text>
   </svg>`;
@@ -1466,7 +1466,7 @@ function renderRight(){
   document.getElementById("right").innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div class="kicker" style="margin:0">Scenario Studio</div><span class="btn sm" onclick="resetScenario()">reset</span></div>
     <div class="flowtag" style="margin-bottom:14px">Pull a lever — every number re-prices live, on every tab.</div>
-    ${lever('fxMarginBps','FX margin (take rate)',7,16,0.1,s.fxMarginBps,v=>(+v).toFixed(1)+'bps')}
+    ${lever('fxMarginBps','FX margin (bps)',7,16,0.1,s.fxMarginBps,v=>(+v).toFixed(1)+'bps')}
     ${lever('volumeGrowthPct','Volume growth',-10,30,1,s.volumeGrowthPct,v=>(v>=0?'+':'')+v+'%')}
     ${lever('rateShiftBps','Rate environment',-200,200,10,s.rateShiftBps,v=>(v>=0?'+':'')+v+'bps')}
     ${lever('complianceAutomationPct','Compliance automation',0,80,5,s.complianceAutomationPct,v=>v+'%')}
@@ -1571,11 +1571,11 @@ function genNote(){
   <div style="border:1px solid var(--line2);border-radius:9px;padding:16px;background:#0a0f18">
     <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px">
       <div><b style="font-size:14px">CAB Payments Holdings (LSE: CABP)</b><div class="dim3" style="font-size:10px">EQUITY RESEARCH NOTE · GENERATED LIVE · FY2025</div></div>
-      <div style="text-align:right"><span class="tag gold">BUY</span><div class="mono" style="font-size:16px;margin-top:4px">TP ${Math.round((m.ebitda*12)/BASE.shares*100)}p <span style="color:var(--ink3);font-size:11px">vs ${BASE.sharePence}p</span></div></div>
+      <div style="text-align:right"><span class="tag gold">BUY</span><div class="mono" style="font-size:16px;margin-top:4px">TP ${Math.round((m.ebitda*10)/BASE.shares*100)}p <span style="color:var(--ink3);font-size:11px">vs ${BASE.sharePence}p · re-rating case</span></div></div>
     </div>
     <div class="note" style="font-size:11.5px;line-height:1.65">
       <b>Investment case.</b> A specialist emerging-markets payments and FX franchise with near-200-year heritage and a network few can replicate — 120 currencies, 800 pairs, 190 countries, and 30+ central-bank and 390 local-bank relationships. After a difficult 2024 reset, FY25 delivered <b>income of £119m (+12%)</b>, <b>adjusted EBITDA of £35m (29.8% margin)</b> and <b>adjusted EPS of 6.8p</b> — <b>ahead of consensus on every line</b>. Wholesale and payment-FX volumes reached <b>£41.9bn (+13%)</b>.<br><br>
-      <b>What the market is missing.</b> The brokers are cautious — consensus ~${BASE.consTarget}p, Barclays ${BASE.barclaysRating} at ${BASE.barclaysPT}p — yet CABP trades at <b>~6× EBITDA (£${BASE.mktCap}m)</b>, cheaper than even shrinking Western Union while Wise carries ~14×. The FX take rate has already rebounded to 0.18% in H2 and fintech & corporate income rose 66% half-on-half. On a 12× peer multiple the franchise supports <b>${F.m0(m.ebitda*12)}</b> (≈${Math.round((m.ebitda*12)/BASE.shares*100)}p/share) — the recovery is in the numbers, not yet in the rating.<br><br>
+      <b>What the market is missing.</b> The brokers are cautious — consensus ~${BASE.consTarget}p, Barclays ${BASE.barclaysRating} at ${BASE.barclaysPT}p — yet CABP trades at <b>~6× EBITDA (£${BASE.mktCap}m)</b>, cheaper than even shrinking Western Union while Wise carries ~14×. The FX take rate has already rebounded to 0.18% in H2 and fintech & corporate income rose 66% half-on-half. On a ~10× peer multiple — between Western Union's ~6× and Wise's ~14× — the franchise supports <b>${F.m0(m.ebitda*10)}</b> (≈${Math.round((m.ebitda*10)/BASE.shares*100)}p/share, illustrative) — the recovery is in the numbers, not yet in the rating.<br><br>
       <b>Economic profit.</b> Group ROE of <b>${F.pct(m.roe)}</b> sits around an estimated <b>${F.pct0(COE)}</b> cost of equity — economic profit of roughly <b>${F.m(m.ep)}</b>, with wide dispersion. A long tail of frontier corridors (secondary NGN, GHS, CDF, SLE) and sub-scale MTOs runs <b>negative EP</b>, masking the strength of the core.<br><br>
       <b>Catalysts.</b> (i) repricing the value-destroying tail; (ii) automating financial-crime operations (−£4.4m cost); (iii) redeploying ~£118m of trapped nostro liquidity; (iv) anchoring new development-finance mandates. Execution lifts ROE toward <b>~${F.pct(b.roe+0.038)}</b> and supports a re-rating.<br><br>
       <b>Risks.</b> Frontier-currency convertibility (NGN/GHS), correspondent de-risking, sanctions exposure on high-risk corridors, and net-interest sensitivity to the rate cycle.
@@ -1593,7 +1593,7 @@ function genBoard(){
       <b>1. We out-performed the market's model of us.</b> Income £119m, adjusted EBITDA £35m, EPS 6.8p — a clear return to growth, with the FX take rate recovering to 0.18% in H2 and fintech income up 66% half-on-half. The story is being told too conservatively — the brokers still sit cautious.<br><br>
       <b>2. We create economic value — but unevenly.</b> Group economic profit is <b>${F.m(m.ep)}</b> over the cost of equity. Yet <b>${neg.length} corridors and ${m.clients.filter(c=>c.ep<0).length} relationships destroy value</b>. The core is stronger than the headline; the tail is dragging it.<br><br>
       <b>3. Three moves change the trajectory.</b> Automate financial crime (−£4.4m, no revenue at risk). Reprice the frontier tail (+£2.4m). Redeploy £118m of trapped liquidity. Together: ROE from <b>${F.pct(b.roe)}</b> toward <b>${F.pct(b.roe+0.038)}</b>.<br><br>
-      <b>4. This is where the share price re-rates.</b> The market values us at ~5.8× EBITDA (£${BASE.mktCap}m, from £851m at IPO); peers trade at 10–15×. Every basis point of ROE we add — and every point of dispersion we remove — narrows that gap.<br><br>
+      <b>4. This is where the share price re-rates.</b> The market values us at ~6× EBITDA (£${BASE.mktCap}m, from £851m at IPO); peers trade at ~6–14× (Western Union to Wise). Every basis point of ROE we add — and every point of dispersion we remove — narrows that gap.<br><br>
       <b>The ask:</b> back the modernisation of the frontier rails and the financial-crime platform — the payback shows up in ROE, not just cost.
     </div>
   </div>`;
@@ -1624,7 +1624,7 @@ setInterval(tick,1000); tick();
 const kpiCard=(lab,val,sub,col)=>`<div class="card"><div class="stat"><div class="lab">${lab}</div><div class="num" style="font-size:22px;${col?'color:'+col:''}">${val}</div><div class="sub">${sub}</div></div></div>`;
 
 VIEWS.overview=function(m){
-  const street=BASE.mktCap, bid=BASE.stoneXVal, intrinsic=m.ebitda*12;
+  const street=BASE.mktCap, bid=BASE.stoneXVal, intrinsic=m.ebitda*10;
   const mktYield=m.netProfit/BASE.mktCap;
   return `
   <div class="viewhead"><div><div class="kicker">Overview · Where we are today</div>
@@ -1687,7 +1687,7 @@ VIEWS.revenue=function(m){
       <div class="grid2">
         <div class="stat"><div class="lab">FX income</div><div class="num" style="font-size:20px">£49m</div><div class="sub">+25% year-on-year</div></div>
         <div class="stat"><div class="lab">FX &amp; payment volume</div><div class="num" style="font-size:20px">£41.9bn</div><div class="sub">+13%</div></div>
-        <div class="stat"><div class="lab">Take rate (margin)</div><div class="num" style="font-size:20px">0.15%</div><div class="sub">up from 0.14%</div></div>
+        <div class="stat"><div class="lab">Take rate (margin)</div><div class="num" style="font-size:20px">0.15%</div><div class="sub">0.12% H1 → 0.18% H2</div></div>
         <div class="stat"><div class="lab">Active clients</div><div class="num" style="font-size:20px">592</div><div class="sub">from 546</div></div>
       </div>
       <div class="flowtag" style="margin-top:10px">Revenue is volume × take rate × mix. Each 1bp of take rate on £41.9bn is roughly £4m. Management guides income (ex-interest) to compound in the high-teens to low-20s % a year over three years — pricing discipline and mix matter as much as new volume.</div>
@@ -1734,7 +1734,7 @@ VIEWS.cost=function(m){
     <div class="card"><div class="ch"><h3>PEOPLE — THE BIGGEST COST</h3></div>
       <div class="grid2">
         <div class="stat"><div class="lab">Staff cost</div><div class="num" style="font-size:20px">£${m.staff.toFixed(0)}m</div><div class="sub">~half of cash opex</div></div>
-        <div class="stat"><div class="lab">Headcount (FTE)</div><div class="num" style="font-size:20px">~366</div><div class="sub">leaner after the reset</div></div>
+        <div class="stat"><div class="lab">Headcount (FTE)</div><div class="num" style="font-size:20px">~366</div><div class="sub">leaner after the reset · illustrative</div></div>
         <div class="stat"><div class="lab">Cost per head</div><div class="num" style="font-size:20px">~£${(m.staff/366*1000).toFixed(0)}k</div><div class="sub">specialist, London-weighted</div></div>
         <div class="stat"><div class="lab">2026 plan</div><div class="num" style="font-size:20px">Invest</div><div class="sub">client teams; cost rises ahead of inflation</div></div>
       </div>
@@ -1831,10 +1831,10 @@ VIEWS.strategy=function(m){
         const s=FSCEN.find(x=>x[0]===selectedScenario);
         const inc=b.income+s[3], cashOpex=b.cashOpex+s[4], eb=inc-cashOpex;
         const pbt=eb-b.amort-b.da-b.adjusting, net=pbt-Math.max(0,pbt)*TAXR;
-        const roe=net/b.equity, cir=(cashOpex+b.amort+b.da)/inc, val=eb*12;
+        const roe=net/b.equity, cir=(cashOpex+b.amort+b.da)/inc, val=eb*10;
         const row=(lab,base,now,fmt,good)=>{const d=now-base;const cls=Math.abs(d)<0.0005?'dim3':((d*good)>=0?'pos':'neg');return `<tr><td class="l">${lab}</td><td>${fmt(base)}</td><td style="color:#fff">${fmt(now)}</td><td class="${cls}">${d>=0?'+':'−'}${fmt(Math.abs(d))}</td></tr>`;};
         return `<div class="grid2"><table><thead><tr><th class="l">Metric</th><th>Base</th><th>Scenario</th><th>Δ</th></tr></thead><tbody>
-          ${row('Revenue',b.income,inc,F.m0,1)}${row('Adj. EBITDA',b.ebitda,eb,F.m0,1)}${row('Cost / income',b.cir,cir,F.pct,-1)}${row('ROE',b.roe,roe,F.pct,1)}${row('Intrinsic value (12×)',b.ebitda*12,val,F.m0,1)}
+          ${row('Revenue',b.income,inc,F.m0,1)}${row('Adj. EBITDA',b.ebitda,eb,F.m0,1)}${row('Cost / income',b.cir,cir,F.pct,-1)}${row('ROE',b.roe,roe,F.pct,1)}${row('Implied value (10×)',b.ebitda*10,val,F.m0,1)}
         </tbody></table>
         <div><div class="note">${s[2]}</div><div class="divider"></div><div class="note"><b style="color:#f5b942">What management should do.</b> ${s[5]}</div></div></div>`;
       })():`${hbars(scen.map(x=>({label:x.s[1].length>26?x.s[1].slice(0,24)+'…':x.s[1],value:x.roeD,disp:F.signbp(x.roeD*100),color:x.roeD>=0?'#37d39a':'#ff5d6c'})),{diverging:true,w:520,rowH:26,labelW:175})}<div class="flowtag" style="margin-top:6px">Click a scenario for the full impact. AI / compliance automation is the big upside; stablecoin disruption and a Nigeria devaluation are the big downside risks.</div>`}</div>
