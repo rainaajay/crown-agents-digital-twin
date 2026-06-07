@@ -178,6 +178,7 @@ tr.clk:hover td{background:#101a29}
 .actpick{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .fnote{font-size:10.5px;color:var(--ink2);line-height:1.5;padding:6px 0;border-bottom:1px solid var(--line)}
 .fnote:last-child{border-bottom:0}.fnote b{color:var(--ink)}
+@media print{#nav,#right{display:none!important}#shell{display:block}#kpis{overflow:visible}#main{overflow:visible;height:auto}body{height:auto;overflow:visible}#topbar .deskstat .btn{display:none}.card{break-inside:avoid}}
 .actpick .chk{flex:0 0 17px;height:17px;border:1.5px solid var(--line2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#241900}
 .actpick .chk.on{background:var(--gold);border-color:var(--gold)}
 </style>
@@ -193,7 +194,7 @@ tr.clk:hover td{background:#101a29}
     </div>
   </div>
   <div style="flex:1"></div>
-  <div class="deskstat"><span class="dot"></span><span>As of June 2026</span><span class="clock" id="clock">--:--:--</span></div>
+  <div class="deskstat"><span class="btn sm" onclick="window.print()" title="Export the current view to PDF">⎙ PDF</span><span class="dot"></span><span>As of June 2026</span><span class="clock" id="clock">--:--:--</span></div>
 </div>
 
 <div id="kpis"></div>
@@ -662,7 +663,7 @@ function renderKPIs(m){
     const ch=Math.abs(it.d)>0.0001;
     const cls = ch ? ((it.d*it.good)>=0?"pos":"neg") : "dim3";
     const dtxt = ch ? `<span class="${cls}">${it.df(it.d)} vs base</span>` : `<span class="dim3">at baseline</span>`;
-    return `<div class="kpi" id="kpi-${it.k}"><div class="k">${it.k}</div><div class="v">${it.v}</div><div class="d">${dtxt}</div></div>`;
+    return `<div class="kpi" id="kpi-${it.k}" title="${KPITIPS[it.k]||''}"><div class="k">${it.k}</div><div class="v">${it.v}</div><div class="d">${dtxt}</div></div>`;
   }).join("");
 }
 
@@ -714,6 +715,15 @@ const FNOTES_FOR={
   market:["EV / EBITDA","EBITDA margin","Take rate"],
   strategy:["Economic profit","Nostro / trapped liquidity"]
 };
+const KPITIPS={
+  "Return on Equity":"Profit as a percentage of the equity used. Beat the ~11% cost of equity and you create value.",
+  "Economic Profit":"What is left after charging for the capital used — return minus the cost of that capital.",
+  "Adj. EBITDA":"Operating profit before interest, tax, depreciation and amortisation.",
+  "Total Income":"FX + payments + banking income for the year.",
+  "Cost / Income":"Share of income eaten by running costs. Lower is better.",
+  "Intrinsic value (12×)":"What the business is worth on a payments-peer multiple of ~12x EBITDA."
+};
+const PROVENANCE=`<div style="margin-top:14px;padding:8px 2px"><div class="fnote" style="border:0;color:var(--ink3)"><b style="color:var(--ink2)">About the data.</b> <span class="pos">Public</span> (filings / market data): financials, segment splits, take rate, peers, share price, takeover and macro facts come from CAB Payments / Crown Agents Bank disclosures, LSE data and news. <span style="color:#3fa9ff">Modelled</span>: economic profit, cost of equity and valuation multiples are derived from those figures. <span style="color:#ffb13d">Illustrative</span>: the corridor, currency and nostro line items are realistic placeholders shaped to CAB's footprint — swap in the bank's ledgers and they become exact. Not investment advice.</div></div>`;
 /* ============================================================ VIEWS ============================================================ */
 const VIEWS={};
 
@@ -1603,7 +1613,7 @@ function genNoteWrap(){}
 function refresh(){
   const m=compute();
   renderKPIs(m);
-  document.getElementById("main").innerHTML=VIEWS[activeView](m) + fnotes(FNOTES_FOR[activeView]||[]);
+  document.getElementById("main").innerHTML=VIEWS[activeView](m) + fnotes(FNOTES_FOR[activeView]||[]) + PROVENANCE;
   document.querySelectorAll('.kpi').forEach(k=>{k.classList.remove('flash');void k.offsetWidth;k.classList.add('flash');});
 }
 // clock
@@ -1715,6 +1725,21 @@ VIEWS.cost=function(m){
     <div class="card"><div class="ch"><h3>HIGH vs PEERS</h3></div>
       ${hbars([{label:'CAB Payments',value:79,disp:'79%',color:'#ff5d6c'},{label:'Scalable peers',value:62,disp:'62%',color:'#37d39a'},{label:'Target',value:60,disp:'60%',color:'#f5b942'}],{labelW:120,w:460,rowH:32})}
       <div class="flowtag" style="margin-top:8px">Every point off the cost-income ratio drops ~£1.2m to profit. The operating leverage is real — H2 2025 adjusted EBITDA rose ~69% half-on-half — and management has guided to a structural fall in cost-income (2026 is a step-up year as it invests in client teams). Closing to peer levels is the biggest self-help lever on ROE.</div></div>
+  </div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>THE H1 → H2 INFLECTION</h3><span class="meta">operating leverage is showing</span></div>
+      ${hbars([{label:'H1 2025',value:85,disp:'85%',color:'#ff5d6c'},{label:'H2 2025',value:74,disp:'74%',color:'#37d39a'},{label:'Full year',value:79,disp:'79%',color:'#f5b942'}],{labelW:90,w:430,rowH:30})}
+      <div class="flowtag" style="margin-top:6px">Cost-income fell from 85% in H1 to 74% in H2 as income outgrew cost — adjusted EBITDA rose ~69% half-on-half. The exit rate, not the average, is the signal.</div>
+    </div>
+    <div class="card"><div class="ch"><h3>PEOPLE — THE BIGGEST COST</h3></div>
+      <div class="grid2">
+        <div class="stat"><div class="lab">Staff cost</div><div class="num" style="font-size:20px">£${m.staff.toFixed(0)}m</div><div class="sub">~half of cash opex</div></div>
+        <div class="stat"><div class="lab">Headcount (FTE)</div><div class="num" style="font-size:20px">~366</div><div class="sub">leaner after the reset</div></div>
+        <div class="stat"><div class="lab">Cost per head</div><div class="num" style="font-size:20px">~£${(m.staff/366*1000).toFixed(0)}k</div><div class="sub">specialist, London-weighted</div></div>
+        <div class="stat"><div class="lab">2026 plan</div><div class="num" style="font-size:20px">Invest</div><div class="sub">client teams; cost rises ahead of inflation</div></div>
+      </div>
+      <div class="flowtag" style="margin-top:8px">The route to a low-60s cost-income is operating leverage — growing income on a broadly fixed people base, then shifting work from people to technology.</div>
+    </div>
   </div>
   <div class="card hero" style="margin-bottom:14px">
     <div class="ch"><h3>WHERE THE £${m.income.toFixed(0)}m GOES — INCOME TO ECONOMIC PROFIT</h3><span class="meta">every pound is kept as profit or consumed by a cost or the cost of capital</span></div>
@@ -1838,6 +1863,16 @@ VIEWS.clients=function(m){
     </div>
     <div class="card"><div class="ch"><h3>HOW THE CLIENT BASE COULD CHANGE</h3></div>
       ${changes.map(x=>`<div class="fnote"><b class="gold">›</b> ${x}</div>`).join('')}
+    </div>
+  </div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card"><div class="ch"><h3>DIVERSIFICATION — CONCENTRATION IS FALLING</h3></div>
+      ${hbars([{label:'Top-5 corridors',value:32,disp:'32%',color:'#37d39a'},{label:'  …at IPO peak',value:49,disp:'49%',color:'#647890'},{label:'Top-5 currencies',value:32,disp:'32%',color:'#37d39a'},{label:'  …in 2023',value:45,disp:'45%',color:'#647890'}],{labelW:120,w:430,rowH:26})}
+      <div class="flowtag" style="margin-top:6px">No single client is more than ~7% of income, and reliance on the top corridors and currencies has fallen sharply since the IPO — a more resilient, harder-to-shock book.</div>
+    </div>
+    <div class="card"><div class="ch"><h3>BY GEOGRAPHY — BROADENING OUT</h3></div>
+      ${hbars([['Africa',52,'#f5b942'],['Americas',35,'#3fa9ff'],['Asia / Pacific',8,'#34d3c4'],['Middle East / other',5,'#9b7bff']].map(g=>({label:g[0],value:g[1],disp:g[1]+'%',color:g[2]})),{labelW:130,w:430,rowH:26})}
+      <div class="flowtag" style="margin-top:6px">Historically Africa-centric, now diversifying — the Americas are ~35% of flows, with new offices in New York (USD clearing) and Abu Dhabi extending into the Gulf.</div>
     </div>
   </div>
   <div class="card"><div class="ch"><h3>THE SIX SEGMENTS — WHO, WHY, AND WHAT COULD CHANGE</h3></div>
